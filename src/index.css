@@ -1,0 +1,527 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  
+  --color-action-lime: #CCFF00;
+  --color-critical-red: #FF2A2A;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Google Translate styling */
+#google_translate_element {
+  display: inline-flex;
+  align-items: center;
+}
+/* Hide the Google Translate "Powered by" branding and clutter completely */
+.goog-te-gadget {
+  font-family: var(--font-sans) !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.goog-te-gadget span,
+.goog-te-gadget a,
+.goog-logo-link,
+.goog-logo-link img {
+  display: none !important;
+  font-size: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* Style the actual Google Translate select combo dropdown beautifully */
+.goog-te-gadget .goog-te-combo {
+  background-color: transparent !important;
+  border: none !important;
+  color: #CCFF00 !important; /* Premium neon accent */
+  font-weight: 700 !important;
+  padding: 2px 4px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  height: 24px !important;
+  line-height: 20px !important;
+}
+.goog-te-gadget .goog-te-combo:hover {
+  color: white !important;
+}
+.goog-te-gadget .goog-te-combo option {
+  background-color: #111114 !important;
+  color: white !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+/* Hide the Google Translate default iframe top banner and keep page top neat */
+.goog-te-banner-frame.skiptranslate, .goog-te-banner-frame {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+}
+.goog-te-balloon-frame {
+  display: none !important;
+}
+.skiptranslate {
+  font-family: inherit !important;
+}
+iframe[id*="translate"] {
+  display: none !important;
+}
+
+/* HIGH-CONTRAST LIGHT MODE THEME OVERRIDES */
+.light {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.light body {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Adapt hardcoded text colors */
+.light .text-white {
+  color: #0f172a !important;
+}
+.light .text-white\/90 {
+  color: #0f172a !important;
+}
+.light .text-white\/80 {
+  color: #1e293b !important;
+}
+.light .text-white\/70 {
+  color: #334155 !important;
+}
+.light .text-white\/60 {
+  color: #475569 !important;
+}
+.light .text-white\/50 {
+  color: #475569 !important;
+}
+.light .text-white\/40 {
+  color: #64748b !important;
+}
+.light .text-white\/30 {
+  color: #94a3b8 !important;
+}
+.light .text-white\/20 {
+  color: #cbd5e1 !important;
+}
+
+/* Hardcoded grey-slate text colors */
+.light .text-gray-400,
+.light .text-slate-400 {
+  color: #64748b !important;
+}
+.light .text-gray-300,
+.light .text-slate-300 {
+  color: #475569 !important;
+}
+.light .text-gray-500,
+.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Adapt hardcoded dark backgrounds to crisp white/light-slate cards */
+.light .bg-\[\#0A0A0B\],
+.light .bg-\[\#08080A\] {
+  background-color: #f8fafc !important;
+}
+.light .bg-\[\#111114\],
+.light .bg-\[\#16161A\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+.light .bg-white\/5,
+.light .bg-white\/10 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+.light .bg-\[\#16161A\]\/50,
+.light .bg-\[\#111114\]\/50 {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+}
+.light .bg-\[\#111114\]\/85 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+.light .bg-slate-900\/80 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+.light .bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Borders adjustments */
+.light .border-white\/5,
+.light .border-white\/10,
+.light .border-white\/15,
+.light .border-white\/20,
+.light .border-slate-800,
+.light .border-slate-850 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Premium branding and high contrast status indicators */
+.light .text-purple-300 {
+  color: #7c3aed !important;
+}
+.light .text-\[\#CCFF00\],
+.light .text-\[\#ccff00\] {
+  color: #5A8F00 !important; /* Elegant dark green for Operations */
+}
+.light .border-\[\#CCFF00\],
+.light .border-\[\#ccff00\] {
+  border-color: #5A8F00 !important;
+}
+.light .border-\[\#CCFF00\]\/30,
+.light .border-\[\#ccff00\]\/30 {
+  border-color: rgba(90, 143, 0, 0.3) !important;
+}
+.light .text-\[\#9D50FF\],
+.light .text-\[\#9d50ff\] {
+  color: #7c3aed !important; /* Premium royal purple for Unity Path */
+}
+.light .border-\[\#9D50FF\],
+.light .border-\[\#9d50ff\] {
+  border-color: #7c3aed !important;
+}
+.light .border-\[\#9D50FF\]\/30,
+.light .border-\[\#9d50ff\]\/30 {
+  border-color: rgba(124, 58, 237, 0.3) !important;
+}
+.light .text-\[\#00F0FF\],
+.light .text-\[\#00f0ff\] {
+  color: #0284c7 !important; /* Vivid clear sky blue */
+}
+.light .border-\[\#00F0FF\],
+.light .border-\[\#00f0ff\] {
+  border-color: #0284c7 !important;
+}
+.light .text-\[\#00ffcc\] {
+  color: #0d9488 !important; /* Dark solid teal */
+}
+.light .text-\[\#c084fc\] {
+  color: #7c3aed !important;
+}
+.light .keep-white,
+.light .keep-white * {
+  color: #ffffff !important;
+}
+.light .border-white {
+  border-color: #cbd5e1 !important;
+}
+
+/* Warning & State Indicators */
+.light .text-amber-400 {
+  color: #b45309 !important; /* Amber-700 */
+}
+.light .text-amber-500 {
+  color: #d97706 !important; /* Amber-600 */
+}
+.light .border-amber-500\/30 {
+  border-color: rgba(180, 83, 9, 0.3) !important;
+}
+.light .text-red-400 {
+  color: #b91c1c !important; /* Red-700 */
+}
+.light .border-red-500\/30 {
+  border-color: rgba(185, 28, 28, 0.3) !important;
+}
+.light .text-emerald-400 {
+  color: #15803d !important; /* Green-700 */
+}
+.light .border-emerald-500\/30 {
+  border-color: rgba(21, 128, 61, 0.3) !important;
+}
+
+/* Background/opacity color badges for light mode */
+.light .bg-\[\#CCFF00\]\/10,
+.light .bg-\[\#CCFF00\]\/15,
+.light .bg-\[\#CCFF00\]\/20 {
+  background-color: rgba(90, 143, 0, 0.1) !important;
+  color: #5A8F00 !important;
+  border-color: rgba(90, 143, 0, 0.2) !important;
+}
+.light .bg-\[\#9D50FF\]\/20,
+.light .bg-\[\#9D50FF\]\/25,
+.light .bg-\[\#9D50FF\]\/15,
+.light .bg-\[\#9D50FF\]\/10 {
+  background-color: rgba(124, 58, 237, 0.08) !important;
+  color: #7c3aed !important;
+  border-color: rgba(124, 58, 237, 0.15) !important;
+}
+.light .bg-\[\#00F0FF\]\/10,
+.light .bg-\[\#00F0FF\]\/15,
+.light .bg-\[\#00F0FF\]\/20 {
+  background-color: rgba(2, 132, 199, 0.08) !important;
+  color: #0284c7 !important;
+  border-color: rgba(2, 132, 199, 0.15) !important;
+}
+.light .bg-\[\#00ffcc\]\/5,
+.light .bg-\[\#00ffcc\]\/10,
+.light .bg-\[\#00ffcc\]\/15,
+.light .bg-\[\#00ffcc\]\/20 {
+  background-color: rgba(13, 148, 136, 0.08) !important;
+  color: #0d9488 !important;
+  border-color: rgba(13, 148, 136, 0.15) !important;
+}
+.light .border-\[\#00ffcc\]\/30 {
+  border-color: rgba(13, 148, 136, 0.3) !important;
+}
+.light .bg-red-500\/10 {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+  color: #b91c1c !important;
+}
+.light .bg-amber-500\/10 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+  color: #d97706 !important;
+}
+.light .bg-emerald-500\/10 {
+  background-color: rgba(22, 163, 74, 0.08) !important;
+  color: #15803d !important;
+}
+
+/* Interactive elements & input overrides */
+.light input,
+.light select,
+.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+.light input:focus,
+.light select:focus,
+.light textarea:focus {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 1px #7c3aed !important;
+}
+.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Explicit layouts */
+.light .text-slate-950 {
+  color: #0f172a !important;
+}
+
+/* HIGH-CONTRAST MODE THEME OVERRIDES */
+.high-contrast,
+.high-contrast body,
+.high-contrast #fielda-shell {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+/* Force pure high contrast borders and text colors */
+.high-contrast *:not(svg):not(path):not(circle):not(rect):not(polygon):not(g):not(polyline):not(ellipse):not(canvas) {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+  outline-color: #FFFF00 !important;
+}
+
+.high-contrast p,
+.high-contrast span,
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3,
+.high-contrast h4,
+.high-contrast li,
+.high-contrast select,
+.high-contrast input {
+  color: #FFFFFF !important;
+}
+
+.high-contrast a,
+.high-contrast button {
+  background-color: #000000 !important;
+  color: #FFFF00 !important;
+  border: 2px solid #FFFF00 !important;
+  text-decoration: underline !important;
+  font-weight: 800 !important;
+}
+
+.high-contrast a:hover,
+.high-contrast button:hover {
+  background-color: #FFFF00 !important;
+  color: #000000 !important;
+  text-decoration: none !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #FFFFFF !important;
+}
+
+.high-contrast .bg-\[\#111114\],
+.high-contrast .bg-\[\#16161A\],
+.high-contrast .bg-white\/5,
+.high-contrast .bg-white\/10 {
+  background-color: #000000 !important;
+  border: 2px solid #FFFFFF !important;
+}
+
+.high-contrast .text-\[\#9D50FF\],
+.high-contrast .text-\[\#CCFF00\],
+.high-contrast .text-\[\#00F0FF\] {
+  color: #FFFF00 !important;
+}
+
+/* HIGH-CONTRAST LIGHT MODE THEME OVERRIDES */
+.light.high-contrast,
+.light.high-contrast body,
+.light.high-contrast #fielda-shell {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+/* Force pure high contrast borders, backgrounds, and text colors for light mode */
+.light.high-contrast *:not(svg):not(path):not(circle):not(rect):not(polygon):not(g):not(polyline):not(ellipse):not(canvas) {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  outline-color: #0000FF !important;
+}
+
+.light.high-contrast p,
+.light.high-contrast span,
+.light.high-contrast h1,
+.light.high-contrast h2,
+.light.high-contrast h3,
+.light.high-contrast h4,
+.light.high-contrast li,
+.light.high-contrast select,
+.light.high-contrast input,
+.light.high-contrast label,
+.light.high-contrast textarea,
+.light.high-contrast table,
+.light.high-contrast th,
+.light.high-contrast td {
+  color: #000000 !important;
+}
+
+.light.high-contrast a,
+.light.high-contrast button {
+  background-color: #FFFFFF !important;
+  color: #0000FF !important;
+  border: 2px solid #0000FF !important;
+  text-decoration: underline !important;
+  font-weight: 800 !important;
+}
+
+.light.high-contrast a:hover,
+.light.high-contrast button:hover {
+  background-color: #0000FF !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+}
+
+.light.high-contrast input,
+.light.high-contrast select,
+.light.high-contrast textarea {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+.light.high-contrast .bg-\[\#111114\],
+.light.high-contrast .bg-\[\#16161A\],
+.light.high-contrast .bg-white\/5,
+.light.high-contrast .bg-white\/10,
+.light.high-contrast .bg-[#0A0A0B],
+.light.high-contrast .bg-[#111114],
+.light.high-contrast .bg-[#16161A],
+.light.high-contrast .bg-black,
+.light.high-contrast .bg-[#0a0a0c] {
+  background-color: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+}
+
+.light.high-contrast .text-\[\#9D50FF\],
+.light.high-contrast .text-\[\#CCFF00\],
+.light.high-contrast .text-\[\#00F0FF\],
+.light.high-contrast .text-purple-300,
+.light.high-contrast .text-green-400,
+.light.high-contrast .text-blue-400,
+.light.high-contrast .text-indigo-400 {
+  color: #0000FF !important;
+}
+
+/* Ensure sensory advisories and emergency panels have clear high-contrast in light mode */
+.light.high-contrast .border-amber-500,
+.light.high-contrast .bg-amber-500\/10 {
+  background-color: #FFFFE0 !important;
+  border: 3px solid #000000 !important;
+}
+
+.light.high-contrast .text-amber-400,
+.light.high-contrast .text-amber-500 {
+  color: #000000 !important;
+  font-weight: 900 !important;
+}
+
+.light.high-contrast .border-red-500\/40,
+.light.high-contrast .bg-red-950\/20 {
+  background-color: #FFE6E6 !important;
+  border: 3px solid #CC0000 !important;
+}
+
+.light.high-contrast .text-red-400 {
+  color: #CC0000 !important;
+  font-weight: 900 !important;
+}
+
+

@@ -1,0 +1,6 @@
+{
+  "name": "Fielda",
+  "description": "GenAI-powered World Cup 2026 stadium operations intelligence and inclusive fan experience (Unity Path).",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
