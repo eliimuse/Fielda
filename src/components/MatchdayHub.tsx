@@ -212,7 +212,7 @@ export const MatchdayHub: React.FC<{
   }, []);
 
   const triggerAccessibilityDispatch = async (
-    type: "wheelchair" | "sensory_kit" | "guiding_companion",
+    type: "wheelchair" | "sensory_kit" | "guiding_companion" | "volunteer" | "sos",
   ) => {
     const fanId = profile?.id || "anonymous-fan";
     await supabase.from("accessibility_requests").insert({
@@ -220,6 +220,7 @@ export const MatchdayHub: React.FC<{
       request_type: type,
       zone_id: "zone-1a", // main entrance default
       status: "pending",
+      created_at: new Date().toISOString(),
     });
 
     // Also dispatch notification to operations channel so they see it live!
@@ -228,7 +229,11 @@ export const MatchdayHub: React.FC<{
         ? "Wheelchair Assistance"
         : type === "sensory_kit"
           ? "Sensory Kit Request"
-          : "Guiding Companion Dispatch";
+          : type === "volunteer"
+            ? "Volunteer Dispatch"
+            : type === "sos"
+              ? "Emergency SOS Trigger"
+              : "Guiding Companion Dispatch";
     await supabase.from("comms_messages").insert({
       channel: "operations",
       original_text: `[Accessibility request]: Fan requires assistance at Gate A entrance. Service required: ${label}.`,
@@ -243,6 +248,16 @@ export const MatchdayHub: React.FC<{
 
   const handleSubmitSos = async () => {
     if (!selectedZoneId) return;
+
+    // Insert an accessibility request entry first
+    const fanId = profile?.id || "anonymous-fan";
+    await supabase.from("accessibility_requests").insert({
+      fan_id: fanId,
+      request_type: "sos",
+      zone_id: selectedZoneId || "zone-1a",
+      status: "pending",
+      created_at: new Date().toISOString(),
+    });
 
     const { data } = await supabase.from("incidents").insert({
       stadium_id: stadiumId,
@@ -453,12 +468,18 @@ export const MatchdayHub: React.FC<{
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <button
                   onClick={() => triggerAccessibilityDispatch("wheelchair")}
                   className="p-4 bg-[#111114] border-2 border-white/20 hover:bg-white/10 text-white font-bold text-sm uppercase flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
                 >
                   ♿ Request Wheelchair Help
+                </button>
+                <button
+                  onClick={() => triggerAccessibilityDispatch("volunteer")}
+                  className="p-4 bg-[#111114] border-2 border-white/20 hover:bg-white/10 text-white font-bold text-sm uppercase flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
+                >
+                  🙋 Request Volunteer Dispatch
                 </button>
                 <button
                   onClick={() =>
@@ -510,6 +531,23 @@ export const MatchdayHub: React.FC<{
               </span>
               <span className="text-[10px] font-mono text-white/40 uppercase">
                 Deploy step-free helper
+              </span>
+            </div>
+          </div>
+          <span className="text-[#9D50FF] text-xs font-bold">➔</span>
+        </button>
+        <button
+          onClick={() => triggerAccessibilityDispatch("volunteer")}
+          className="w-full text-left p-3.5 rounded-sm border border-white/5 hover:border-[#9D50FF]/40 bg-[#111114] hover:bg-[#16161A] active:scale-95 transition-all flex items-center justify-between min-h-[44px] cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🙋</span>
+            <div className="text-left">
+              <span className="block text-xs font-display font-bold uppercase text-white">
+                Request Volunteer Dispatch
+              </span>
+              <span className="text-[10px] font-mono text-white/40 uppercase">
+                General assistance in-person volunteer
               </span>
             </div>
           </div>

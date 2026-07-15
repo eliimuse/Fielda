@@ -83,7 +83,7 @@ export interface AIPrediction {
 export interface AccessibilityRequest {
   id: string;
   fan_id: string;
-  request_type: 'wheelchair' | 'sign_language' | 'sensory_kit' | 'guiding_companion';
+  request_type: 'wheelchair' | 'sign_language' | 'sensory_kit' | 'guiding_companion' | 'sos' | 'volunteer';
   zone_id: string;
   status: 'pending' | 'assigned' | 'completed';
   created_at: string;
