@@ -156,7 +156,7 @@ app.post('/api/gemini/transcribe', async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: [
         {
           role: 'user',
@@ -194,7 +194,7 @@ app.post('/api/gemini/translate', async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: `You are a translator for stadium staff and first responders during FIFA World Cup 2026. Translate the following text into the language code or name '${targetLang}'. Translate accurately, maintaining professional emergency and logistics context.
       
       Text to translate:
@@ -237,7 +237,7 @@ app.post('/api/gemini/crowd-prediction', async (req, res) => {
     and a clear, manual reassignment / crowd management command (suggested_action).`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         systemInstruction: systemPrompt,
@@ -351,7 +351,7 @@ app.post('/api/gemini/assign-staff', async (req, res) => {
     Analyze the available staff and choose the single absolute best match. Provide their ID, name, role, and a clear concise reason why they are selected.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         systemInstruction: systemPrompt,
@@ -429,7 +429,7 @@ app.post('/api/gemini/chat', async (req, res) => {
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       contents: chatHistory.map((ch: any) => ch.parts[0].text).join('\n'), // simplistic concat or full mapping
       config: {
         systemInstruction: systemPrompt
