@@ -140,6 +140,22 @@ function parseCleanJSON(text: string): any {
   }
 }
 
+// --- API RETRY HELPER ---
+async function callGeminiWithRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    const status = error.status || error.statusCode;
+    const isTransient = status === 503 || status === 429 || error.message?.includes('UNAVAILABLE') || error.message?.includes('high demand') || error.message?.includes('quota');
+    if (isTransient && retries > 0) {
+      console.warn(`Gemini call failed with ${status || error.message}. Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return callGeminiWithRetry(fn, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
 // --- API ENDPOINTS ---
 
 // Transcribe Audio
@@ -155,7 +171,7 @@ app.post('/api/gemini/transcribe', async (req, res) => {
   }
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: [
         {
@@ -166,7 +182,7 @@ app.post('/api/gemini/transcribe', async (req, res) => {
           ]
         }
       ]
-    });
+    }));
     res.json({ text: response.text?.trim() || "", source: 'gemini' });
   } catch (error: any) {
     const isQuota = error.status === 429 || (error.message && error.message.includes('quota'));
@@ -193,7 +209,7 @@ app.post('/api/gemini/translate', async (req, res) => {
   }
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: `You are a translator for stadium staff and first responders during FIFA World Cup 2026. Translate the following text into the language code or name '${targetLang}'. Translate accurately, maintaining professional emergency and logistics context.
       
@@ -202,7 +218,7 @@ app.post('/api/gemini/translate', async (req, res) => {
       
       Response rules:
       Return ONLY the translated text. Do not add any greeting, introduction, notes, quotes or explanations.`,
-    });
+    }));
     
     res.json({ translatedText: response.text?.trim() || text, source: 'gemini' });
   } catch (error: any) {
@@ -236,7 +252,7 @@ app.post('/api/gemini/crowd-prediction', async (req, res) => {
     confidence score (confidence) from 0 to 100, 
     and a clear, manual reassignment / crowd management command (suggested_action).`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
@@ -265,7 +281,7 @@ app.post('/api/gemini/crowd-prediction', async (req, res) => {
           required: ["predicted_congestion_pct", "confidence", "forecast_time", "suggested_action"]
         }
       }
-    });
+    }));
 
     const rawText = response.text || '{}';
     const result = parseCleanJSON(rawText);
@@ -293,35 +309,40 @@ app.post('/api/gemini/assign-staff', async (req, res) => {
 
   // Helper local matcher function for robust fallback
   const getFallbackAssignment = () => {
-    // Basic deterministic backup assignment
-    const activeStaff = (staffList || []).filter(
-      (s: any) => s.stadium_id === incident.stadium_id && s.status !== 'off_duty'
-    );
-    if (activeStaff.length === 0) return null;
+    try {
+      // Basic deterministic backup assignment
+      const activeStaff = (staffList || []).filter(
+        (s: any) => s.stadium_id === incident.stadium_id && s.status !== 'off_duty'
+      );
+      if (activeStaff.length === 0) return null;
 
-    // Filter by role preference
-    let rolePreferred: string[] = [];
-    const titleLower = (incident.title || '').toLowerCase();
-    const descLower = (incident.description || '').toLowerCase();
-    
-    if (titleLower.includes('medical') || descLower.includes('medical') || titleLower.includes('cardiac') || titleLower.includes('trauma')) {
-      rolePreferred = ['First Responder', 'Medical', 'Doctor', 'Nurse'];
-    } else if (titleLower.includes('fire') || titleLower.includes('stampede') || titleLower.includes('hazard')) {
-      rolePreferred = ['Crowd Marshal', 'Security', 'Marshal'];
-    } else if (titleLower.includes('missing') || titleLower.includes('amber') || titleLower.includes('child')) {
-      rolePreferred = ['Accessibility Lead', 'Crowd Marshal', 'Security'];
+      // Filter by role preference
+      let rolePreferred: string[] = [];
+      const titleLower = (incident.title || '').toLowerCase();
+      const descLower = (incident.description || '').toLowerCase();
+      
+      if (titleLower.includes('medical') || descLower.includes('medical') || titleLower.includes('cardiac') || titleLower.includes('trauma')) {
+        rolePreferred = ['First Responder', 'Medical', 'Doctor', 'Nurse'];
+      } else if (titleLower.includes('fire') || titleLower.includes('stampede') || titleLower.includes('hazard')) {
+        rolePreferred = ['Crowd Marshal', 'Security', 'Marshal'];
+      } else if (titleLower.includes('missing') || titleLower.includes('amber') || titleLower.includes('child')) {
+        rolePreferred = ['Accessibility Lead', 'Crowd Marshal', 'Security'];
+      }
+
+      let match = activeStaff.find((s: any) => rolePreferred.some(r => (s?.role || '').toLowerCase().includes(r.toLowerCase())));
+      if (!match) match = activeStaff[0]; // fallback to any active staff
+
+      const zoneObj = (zones || []).find((z: any) => z.id === incident.zone_id);
+      return {
+        assignedStaffId: match?.id || 'fallback-staff',
+        assignedStaffName: match?.name || 'Fallback Staff',
+        assignedStaffRole: match?.role || 'Responder',
+        reason: `[AI Fallback] ${match?.name || 'Staff'} assigned based on active duty role matches (${match?.role || 'Responder'}) for Sector: ${zoneObj?.name || 'Assigned Zone'}.`
+      };
+    } catch (e: any) {
+      console.error('getFallbackAssignment error:', e.message);
+      return null;
     }
-
-    let match = activeStaff.find((s: any) => rolePreferred.some(r => (s.role || '').toLowerCase().includes(r.toLowerCase())));
-    if (!match) match = activeStaff[0]; // fallback to any active staff
-
-    const zoneObj = (zones || []).find((z: any) => z.id === incident.zone_id);
-    return {
-      assignedStaffId: match.id,
-      assignedStaffName: match.name,
-      assignedStaffRole: match.role,
-      reason: `[AI Fallback] ${match.name} assigned based on active duty role matches (${match.role}) for Sector: ${zoneObj?.name || 'Assigned Zone'}.`
-    };
   };
 
   if (!ai) {
@@ -350,7 +371,7 @@ app.post('/api/gemini/assign-staff', async (req, res) => {
     
     Analyze the available staff and choose the single absolute best match. Provide their ID, name, role, and a clear concise reason why they are selected.`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
@@ -379,7 +400,7 @@ app.post('/api/gemini/assign-staff', async (req, res) => {
           required: ["assignedStaffId", "assignedStaffName", "assignedStaffRole", "reason"]
         }
       }
-    });
+    }));
 
     const rawText = response.text || '{}';
     const result = parseCleanJSON(rawText);
@@ -428,13 +449,13 @@ app.post('/api/gemini/chat', async (req, res) => {
       parts: [{ text: question }]
     });
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: chatHistory.map((ch: any) => ch.parts[0].text).join('\n'), // simplistic concat or full mapping
       config: {
         systemInstruction: systemPrompt
       }
-    });
+    }));
 
     res.json({ response: response.text?.trim() || simulateAccessibilityResponse(question), source: 'gemini' });
   } catch (error: any) {
