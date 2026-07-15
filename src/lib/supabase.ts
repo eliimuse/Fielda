@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { 
   UserRole, Profile, Stadium, Zone, Staff, Incident, 
   CommsMessage, CrowdMetric, AIPrediction, AccessibilityRequest, 
@@ -139,13 +138,7 @@ const initialProfiles: Profile[] = [
   { id: 'user-fan', full_name: 'Dev Fan Guest', role: 'fan', language_pref: 'en', created_at: new Date().toISOString() }
 ];
 
-// Initialize real Supabase client with Provided Credentials (safeguarded against type check errors)
-const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://umlrnfplfshxhbwtytsm.supabase.co';
-const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_snQ7cTa2xUh0B7LFTY5hXA_VXkyR_AN';
-
-export const realSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Memory Stores for Local Sync and fallback
+// Memory Stores
 let stadiumsStore = getLocal<Stadium[]>('stadiums', initialStadiums);
 let zonesStore = getLocal<Zone[]>('zones', initialZones).map(z => {
   if (z.name === 'Gate A Entrance') return { ...z, name: 'Gate A' };
@@ -164,7 +157,7 @@ let assistantConversationsStore = getLocal<AssistantConversation[]>('assistant_c
 let profilesStore = getLocal<Profile[]>('profiles', initialProfiles);
 
 // Active User session
-let currentUserProfile = getLocal<Profile | null>('current_user', initialProfiles[0]);
+let currentUserProfile = getLocal<Profile | null>('current_user', initialProfiles[0]); // Default to Organizer for ease
 
 // Realtime notification callbacks
 type Callback = () => void;
@@ -178,212 +171,10 @@ const notifySubscribers = (table: string) => {
   }
 };
 
-const notifyAndSave = (table: string, updatedData: any) => {
-  setLocal(table, updatedData);
-  notifySubscribers(table);
-};
-
-// Simulation Helpers
-const runSelectSimulation = (table: string, chain: any) => {
-  let list: any[] = [];
-  switch (table) {
-    case 'stadiums': list = [...stadiumsStore]; break;
-    case 'zones': list = [...zonesStore]; break;
-    case 'staff': list = [...staffStore]; break;
-    case 'incidents': list = [...incidentsStore]; break;
-    case 'comms_messages': list = [...commsMessagesStore]; break;
-    case 'crowd_metrics': list = [...crowdMetricsStore]; break;
-    case 'ai_predictions': list = [...aiPredictionsStore]; break;
-    case 'accessibility_requests': list = [...accessibilityRequestsStore]; break;
-    case 'sensory_readings': list = [...sensoryReadingsStore]; break;
-    case 'assistant_conversations': list = [...assistantConversationsStore]; break;
-    case 'profiles': list = [...profilesStore]; break;
-    default: list = [];
-  }
-
-  if (chain.eq) {
-    list = list.filter(item => item[chain.eq.col] === chain.eq.val);
-  }
-
-  if (chain.order) {
-    const asc = chain.order.ascending;
-    const col = chain.order.col;
-    list.sort((a, b) => {
-      const valA = a[col];
-      const valB = b[col];
-      if (valA < valB) return asc ? -1 : 1;
-      if (valA > valB) return asc ? 1 : -1;
-      return 0;
-    });
-  }
-
-  if (chain.limit !== undefined) {
-    list = list.slice(0, chain.limit);
-  }
-
-  return { data: list, error: null };
-};
-
-const insertLocal = (table: string, recordWithId: any) => {
-  switch (table) {
-    case 'stadiums': stadiumsStore.push(recordWithId); notifyAndSave(table, stadiumsStore); break;
-    case 'zones': zonesStore.push(recordWithId); notifyAndSave(table, zonesStore); break;
-    case 'staff': staffStore.push(recordWithId); notifyAndSave(table, staffStore); break;
-    case 'incidents': incidentsStore.push(recordWithId); notifyAndSave(table, incidentsStore); break;
-    case 'comms_messages': commsMessagesStore.push(recordWithId); notifyAndSave(table, commsMessagesStore); break;
-    case 'crowd_metrics': crowdMetricsStore.push(recordWithId); notifyAndSave(table, crowdMetricsStore); break;
-    case 'ai_predictions': aiPredictionsStore.push(recordWithId); notifyAndSave(table, aiPredictionsStore); break;
-    case 'accessibility_requests': accessibilityRequestsStore.push(recordWithId); notifyAndSave(table, accessibilityRequestsStore); break;
-    case 'sensory_readings': sensoryReadingsStore.push(recordWithId); notifyAndSave(table, sensoryReadingsStore); break;
-    case 'assistant_conversations': assistantConversationsStore.push(recordWithId); notifyAndSave(table, assistantConversationsStore); break;
-    case 'profiles': profilesStore.push(recordWithId); notifyAndSave(table, profilesStore); break;
-  }
-};
-
-const updateLocal = (table: string, col: string, val: any, updates: any) => {
-  let list: any[] = [];
-  switch (table) {
-    case 'stadiums': list = stadiumsStore; break;
-    case 'zones': list = zonesStore; break;
-    case 'staff': list = staffStore; break;
-    case 'incidents': list = incidentsStore; break;
-    case 'comms_messages': list = commsMessagesStore; break;
-    case 'crowd_metrics': list = crowdMetricsStore; break;
-    case 'ai_predictions': list = aiPredictionsStore; break;
-    case 'accessibility_requests': list = accessibilityRequestsStore; break;
-    case 'sensory_readings': list = sensoryReadingsStore; break;
-    case 'assistant_conversations': list = assistantConversationsStore; break;
-    case 'profiles': list = profilesStore; break;
-  }
-
-  const updatedRecords: any[] = [];
-  list.forEach(item => {
-    if (item[col] === val) {
-      Object.assign(item, updates);
-      updatedRecords.push(item);
-    }
-  });
-
-  notifyAndSave(table, list);
-  return updatedRecords;
-};
-
-const deleteLocal = (table: string, filterFn: (item: any) => boolean) => {
-  let list: any[] = [];
-  switch (table) {
-    case 'stadiums': stadiumsStore = stadiumsStore.filter(filterFn); list = stadiumsStore; break;
-    case 'zones': zonesStore = zonesStore.filter(filterFn); list = zonesStore; break;
-    case 'staff': staffStore = staffStore.filter(filterFn); list = staffStore; break;
-    case 'incidents': incidentsStore = incidentsStore.filter(filterFn); list = incidentsStore; break;
-    case 'comms_messages': commsMessagesStore = commsMessagesStore.filter(filterFn); list = commsMessagesStore; break;
-    case 'crowd_metrics': crowdMetricsStore = crowdMetricsStore.filter(filterFn); list = crowdMetricsStore; break;
-    case 'ai_predictions': aiPredictionsStore = aiPredictionsStore.filter(filterFn); list = aiPredictionsStore; break;
-    case 'accessibility_requests': accessibilityRequestsStore = accessibilityRequestsStore.filter(filterFn); list = accessibilityRequestsStore; break;
-    case 'sensory_readings': sensoryReadingsStore = sensoryReadingsStore.filter(filterFn); list = sensoryReadingsStore; break;
-    case 'assistant_conversations': assistantConversationsStore = assistantConversationsStore.filter(filterFn); list = assistantConversationsStore; break;
-    case 'profiles': profilesStore = profilesStore.filter(filterFn); list = profilesStore; break;
-  }
-  notifyAndSave(table, list);
-};
-
-const clearLocal = (table: string) => {
-  let list: any[] = [];
-  switch (table) {
-    case 'stadiums': stadiumsStore = []; list = stadiumsStore; break;
-    case 'zones': zonesStore = []; list = zonesStore; break;
-    case 'staff': staffStore = []; list = staffStore; break;
-    case 'incidents': incidentsStore = []; list = incidentsStore; break;
-    case 'comms_messages': commsMessagesStore = []; list = commsMessagesStore; break;
-    case 'crowd_metrics': crowdMetricsStore = []; list = crowdMetricsStore; break;
-    case 'ai_predictions': aiPredictionsStore = []; list = aiPredictionsStore; break;
-    case 'accessibility_requests': accessibilityRequestsStore = []; list = accessibilityRequestsStore; break;
-    case 'sensory_readings': sensoryReadingsStore = []; list = sensoryReadingsStore; break;
-    case 'assistant_conversations': assistantConversationsStore = []; list = assistantConversationsStore; break;
-    case 'profiles': profilesStore = []; list = profilesStore; break;
-  }
-  notifyAndSave(table, list);
-};
-
-// Helper to make chainable resilient select promises without triggering TS infinite type resolution
-const makeResilientQuery = (table: string, columns: string = '*', chain: any = {}): any => {
-  const execute = async () => {
-    try {
-      let query: any = realSupabase.from(table).select(columns);
-      if (chain.eq) {
-        query = query.eq(chain.eq.col, chain.eq.val);
-      }
-      if (chain.order) {
-        query = query.order(chain.order.col, { ascending: chain.order.ascending });
-      }
-      if (chain.limit !== undefined) {
-        query = query.limit(chain.limit);
-      }
-      const { data, error } = await query;
-      if (error) throw error;
-      return { data: data || [], error: null };
-    } catch (err: any) {
-      console.warn(`Supabase select on "${table}" falling back to simulated stores:`, err.message || err);
-      return runSelectSimulation(table, chain);
-    }
-  };
-
-  const promise = new Promise<any>((resolve, reject) => {
-    execute().then(resolve, reject);
-  });
-
-  const queryBuilder: any = promise;
-
-  queryBuilder.order = (col: string, options?: { ascending?: boolean }) => {
-    chain.order = { col, ascending: options?.ascending !== false };
-    return makeResilientQuery(table, columns, chain);
-  };
-
-  queryBuilder.eq = (col: string, val: any) => {
-    chain.eq = { col, val };
-    return makeResilientQuery(table, columns, chain);
-  };
-
-  queryBuilder.limit = (n: number) => {
-    chain.limit = n;
-    return makeResilientQuery(table, columns, chain);
-  };
-
-  return queryBuilder;
-};
-
-// Resilient Hybrid Supabase Client
-class ResilientSupabase {
+// Simulation Client Class
+class SupabaseSimulation {
   auth = {
     signUp: async (params: { email: string; password?: string; options?: { data?: { full_name?: string; role?: UserRole; language_pref?: string } } }) => {
-      try {
-        const { data, error } = await realSupabase.auth.signUp({
-          email: params.email,
-          password: params.password || 'TempPassword123!',
-          options: params.options
-        });
-        if (error) throw error;
-        
-        const user = data.user;
-        if (user) {
-          const newProfile: Profile = {
-            id: user.id,
-            full_name: params.options?.data?.full_name || params.email.split('@')[0],
-            role: params.options?.data?.role || 'fan',
-            language_pref: params.options?.data?.language_pref || 'en',
-            created_at: new Date().toISOString()
-          };
-          profilesStore.push(newProfile);
-          setLocal('profiles', profilesStore);
-          currentUserProfile = newProfile;
-          setLocal('current_user', currentUserProfile);
-          notifySubscribers('auth');
-          return { data, error: null };
-        }
-      } catch (err: any) {
-        console.warn('Real Supabase signUp failed, running simulation fallback:', err.message || err);
-      }
-
-      // Simulation Fallback
       const email = params.email;
       const full_name = params.options?.data?.full_name || email.split('@')[0];
       const role = params.options?.data?.role || 'fan';
@@ -400,6 +191,8 @@ class ResilientSupabase {
       
       profilesStore.push(newProfile);
       setLocal('profiles', profilesStore);
+      
+      // Auto login as this new user
       currentUserProfile = newProfile;
       setLocal('current_user', currentUserProfile);
       notifySubscribers('auth');
@@ -408,38 +201,12 @@ class ResilientSupabase {
     },
 
     signInWithPassword: async (params: { email: string; password?: string }) => {
-      try {
-        const { data, error } = await realSupabase.auth.signInWithPassword({
-          email: params.email,
-          password: params.password || 'TempPassword123!'
-        });
-        if (error) throw error;
-
-        // Try getting real profile or creating locally
-        let profile = profilesStore.find(p => p.id === data.user?.id);
-        if (!profile) {
-          profile = {
-            id: data.user?.id || 'user-' + Math.random().toString(36).substr(2, 9),
-            full_name: params.email.split('@')[0],
-            role: 'fan',
-            language_pref: 'en',
-            created_at: new Date().toISOString()
-          };
-          profilesStore.push(profile);
-          setLocal('profiles', profilesStore);
-        }
-        currentUserProfile = profile;
-        setLocal('current_user', currentUserProfile);
-        notifySubscribers('auth');
-        return { data, error: null };
-      } catch (err: any) {
-        console.warn('Real Supabase signInWithPassword failed, running simulation fallback:', err.message || err);
-      }
-
-      // Simulation Fallback
       const email = params.email;
+      // Search profiles. Match a profile for testing easily.
+      // If none, create a temporary fan profile
       let profile = profilesStore.find(p => p.full_name.toLowerCase().includes(email.split('@')[0].toLowerCase()));
       if (!profile) {
+        // Fall back to matching by role
         if (email.includes('org')) {
           profile = profilesStore.find(p => p.role === 'organizer');
         } else if (email.includes('staff')) {
@@ -469,9 +236,6 @@ class ResilientSupabase {
     },
 
     signOut: async () => {
-      try {
-        await realSupabase.auth.signOut();
-      } catch (e) {}
       currentUserProfile = null;
       setLocal('current_user', null);
       notifySubscribers('auth');
@@ -479,10 +243,6 @@ class ResilientSupabase {
     },
 
     getUser: async () => {
-      try {
-        const { data, error } = await realSupabase.auth.getUser();
-        if (data.user) return { data, error: null };
-      } catch (e) {}
       if (currentUserProfile) {
         return { data: { user: { id: currentUserProfile.id, email: `${currentUserProfile.full_name.replace(/\s+/g, '').toLowerCase()}@fielda.org` } }, error: null };
       }
@@ -492,202 +252,210 @@ class ResilientSupabase {
     getProfile: () => currentUserProfile
   };
 
+  // Fluent chain mock
   from(table: string) {
+    const notifyAndSave = (updatedData: any) => {
+      setLocal(table, updatedData);
+      notifySubscribers(table);
+    };
+
     return {
       select: (columns: string = '*') => {
-        return makeResilientQuery(table, columns);
+        let list: any[] = [];
+        switch (table) {
+          case 'stadiums': list = [...stadiumsStore]; break;
+          case 'zones': list = [...zonesStore]; break;
+          case 'staff': list = [...staffStore]; break;
+          case 'incidents': list = [...incidentsStore]; break;
+          case 'comms_messages': list = [...commsMessagesStore]; break;
+          case 'crowd_metrics': list = [...crowdMetricsStore]; break;
+          case 'ai_predictions': list = [...aiPredictionsStore]; break;
+          case 'accessibility_requests': list = [...accessibilityRequestsStore]; break;
+          case 'sensory_readings': list = [...sensoryReadingsStore]; break;
+          case 'assistant_conversations': list = [...assistantConversationsStore]; break;
+          case 'profiles': list = [...profilesStore]; break;
+          default: list = [];
+        }
+
+        // Return builder methods
+        return {
+          order: (col: string, options?: { ascending?: boolean }) => {
+            const asc = options?.ascending !== false;
+            list.sort((a, b) => {
+              const valA = a[col];
+              const valB = b[col];
+              if (valA < valB) return asc ? -1 : 1;
+              if (valA > valB) return asc ? 1 : -1;
+              return 0;
+            });
+            
+            return {
+              limit: (n: number) => {
+                return { data: list.slice(0, n), error: null };
+              },
+              then: (onfulfilled: (res: { data: any[]; error: any }) => any) => {
+                return onfulfilled({ data: list, error: null });
+              },
+              data: list,
+              error: null
+            };
+          },
+          eq: (col: string, val: any) => {
+            const filtered = list.filter(item => item[col] === val);
+            return {
+              order: (c: string, o?: { ascending?: boolean }) => {
+                const asc = o?.ascending !== false;
+                filtered.sort((a, b) => {
+                  if (a[c] < b[c]) return asc ? -1 : 1;
+                  if (a[c] > b[c]) return asc ? 1 : -1;
+                  return 0;
+                });
+                return {
+                  limit: (n: number) => ({ data: filtered.slice(0, n), error: null }),
+                  data: filtered,
+                  error: null
+                };
+              },
+              data: filtered,
+              error: null,
+              then: (onfulfilled: (res: { data: any[]; error: any }) => any) => {
+                return onfulfilled({ data: filtered, error: null });
+              }
+            };
+          },
+          data: list,
+          error: null,
+          then: (onfulfilled: (res: { data: any[]; error: any }) => any) => {
+            return onfulfilled({ data: list, error: null });
+          }
+        };
       },
 
       insert: (record: any) => {
-        const localId = record.id || `${table.substring(0, 3)}-` + Math.random().toString(36).substr(2, 9);
-        const localRecord = {
-          id: localId,
-          ...record,
-          created_at: record.created_at || new Date().toISOString()
-        };
+        const id = record.id || `${table.substring(0,3)}-` + Math.random().toString(36).substr(2, 9);
+        const recordWithId = { id, ...record, created_at: record.created_at || new Date().toISOString() };
+        
+        switch (table) {
+          case 'stadiums': stadiumsStore.push(recordWithId); notifyAndSave(stadiumsStore); break;
+          case 'zones': zonesStore.push(recordWithId); notifyAndSave(zonesStore); break;
+          case 'staff': staffStore.push(recordWithId); notifyAndSave(staffStore); break;
+          case 'incidents': incidentsStore.push(recordWithId); notifyAndSave(incidentsStore); break;
+          case 'comms_messages': commsMessagesStore.push(recordWithId); notifyAndSave(commsMessagesStore); break;
+          case 'crowd_metrics': crowdMetricsStore.push(recordWithId); notifyAndSave(crowdMetricsStore); break;
+          case 'ai_predictions': aiPredictionsStore.push(recordWithId); notifyAndSave(aiPredictionsStore); break;
+          case 'accessibility_requests': accessibilityRequestsStore.push(recordWithId); notifyAndSave(accessibilityRequestsStore); break;
+          case 'sensory_readings': sensoryReadingsStore.push(recordWithId); notifyAndSave(sensoryReadingsStore); break;
+          case 'assistant_conversations': assistantConversationsStore.push(recordWithId); notifyAndSave(assistantConversationsStore); break;
+          case 'profiles': profilesStore.push(recordWithId); notifyAndSave(profilesStore); break;
+        }
 
-        const execute = async () => {
-          try {
-            const { data, error } = await realSupabase.from(table).insert(record).select();
-            if (error) throw error;
-            insertLocal(table, data?.[0] || localRecord);
-            return { data: data || [localRecord], error: null };
-          } catch (err: any) {
-            console.warn(`Supabase insert on "${table}" falling back to simulated stores:`, err.message || err);
-            insertLocal(table, localRecord);
-            return { data: [localRecord], error: null };
+        return {
+          select: () => ({
+            single: () => ({ data: recordWithId, error: null })
+          }),
+          data: [recordWithId],
+          error: null,
+          then: (onfulfilled: (res: { data: any[]; error: any }) => any) => {
+            return onfulfilled({ data: [recordWithId], error: null });
           }
         };
-
-        const promise = new Promise<any>((resolve, reject) => {
-          execute().then(resolve, reject);
-        });
-
-        const insertBuilder: any = promise;
-
-        insertBuilder.select = () => ({
-          single: () => {
-            return new Promise<any>((resolve, reject) => {
-              execute().then(res => resolve({ data: res.data?.[0] || localRecord, error: null }), reject);
-            });
-          }
-        });
-
-        return insertBuilder;
       },
 
       update: (updates: any) => {
         return {
           eq: (col: string, val: any) => {
-            const execute = async () => {
-              try {
-                const { data, error } = await realSupabase.from(table).update(updates).eq(col, val).select();
-                if (error) throw error;
-                updateLocal(table, col, val, updates);
-                return { data: data || [], error: null };
-              } catch (err: any) {
-                console.warn(`Supabase update on "${table}" falling back to simulated stores:`, err.message || err);
-                const updated = updateLocal(table, col, val, updates);
-                return { data: updated, error: null };
-              }
-            };
+            let list: any[] = [];
+            switch (table) {
+              case 'stadiums': list = stadiumsStore; break;
+              case 'zones': list = zonesStore; break;
+              case 'staff': list = staffStore; break;
+              case 'incidents': list = incidentsStore; break;
+              case 'comms_messages': list = commsMessagesStore; break;
+              case 'crowd_metrics': list = crowdMetricsStore; break;
+              case 'ai_predictions': list = aiPredictionsStore; break;
+              case 'accessibility_requests': list = accessibilityRequestsStore; break;
+              case 'sensory_readings': list = sensoryReadingsStore; break;
+              case 'assistant_conversations': list = assistantConversationsStore; break;
+              case 'profiles': list = profilesStore; break;
+            }
 
-            return new Promise<any>((resolve, reject) => {
-              execute().then(resolve, reject);
+            let updatedRecords: any[] = [];
+            list.forEach(item => {
+              if (item[col] === val) {
+                Object.assign(item, updates);
+                updatedRecords.push(item);
+              }
             });
+
+            notifyAndSave(list);
+            return { data: updatedRecords, error: null };
           }
         };
       },
 
       delete: () => {
-        const executeDelete = async (filterFn: (item: any) => boolean, dbOp: (query: any) => any) => {
-          try {
-            const { data, error } = await dbOp(realSupabase.from(table).delete().select());
-            if (error) throw error;
-            deleteLocal(table, filterFn);
-            return { data: data || [], error: null };
-          } catch (err: any) {
-            console.warn(`Supabase delete on "${table}" falling back to simulated stores:`, err.message || err);
-            deleteLocal(table, filterFn);
-            return { data: [], error: null };
+        const executeDelete = (filterFn: (item: any) => boolean) => {
+          let list: any[] = [];
+          switch (table) {
+            case 'stadiums': stadiumsStore = stadiumsStore.filter(filterFn); list = stadiumsStore; break;
+            case 'zones': zonesStore = zonesStore.filter(filterFn); list = zonesStore; break;
+            case 'staff': staffStore = staffStore.filter(filterFn); list = staffStore; break;
+            case 'incidents': incidentsStore = incidentsStore.filter(filterFn); list = incidentsStore; break;
+            case 'comms_messages': commsMessagesStore = commsMessagesStore.filter(filterFn); list = commsMessagesStore; break;
+            case 'crowd_metrics': crowdMetricsStore = crowdMetricsStore.filter(filterFn); list = crowdMetricsStore; break;
+            case 'ai_predictions': aiPredictionsStore = aiPredictionsStore.filter(filterFn); list = aiPredictionsStore; break;
+            case 'accessibility_requests': accessibilityRequestsStore = accessibilityRequestsStore.filter(filterFn); list = accessibilityRequestsStore; break;
+            case 'sensory_readings': sensoryReadingsStore = sensoryReadingsStore.filter(filterFn); list = sensoryReadingsStore; break;
+            case 'assistant_conversations': assistantConversationsStore = assistantConversationsStore.filter(filterFn); list = assistantConversationsStore; break;
+            case 'profiles': profilesStore = profilesStore.filter(filterFn); list = profilesStore; break;
+          }
+          notifyAndSave(list);
+          return { data: [], error: null, then: (onfulfilled: (res: { data: any[]; error: any }) => any) => onfulfilled({ data: [], error: null }) };
+        };
+
+        return {
+          eq: (col: string, val: any) => {
+            return executeDelete(item => item[col] !== val);
+          },
+          neq: (col: string, val: any) => {
+            return executeDelete(item => item[col] === val);
+          },
+          then: (onfulfilled: (res: { data: any[]; error: any }) => any) => {
+            // Delete all records when no filter is chained directly
+            let list: any[] = [];
+            switch (table) {
+              case 'stadiums': stadiumsStore = []; list = stadiumsStore; break;
+              case 'zones': zonesStore = []; list = zonesStore; break;
+              case 'staff': staffStore = []; list = staffStore; break;
+              case 'incidents': incidentsStore = []; list = incidentsStore; break;
+              case 'comms_messages': commsMessagesStore = []; list = commsMessagesStore; break;
+              case 'crowd_metrics': crowdMetricsStore = []; list = crowdMetricsStore; break;
+              case 'ai_predictions': aiPredictionsStore = []; list = aiPredictionsStore; break;
+              case 'accessibility_requests': accessibilityRequestsStore = []; list = accessibilityRequestsStore; break;
+              case 'sensory_readings': sensoryReadingsStore = []; list = sensoryReadingsStore; break;
+              case 'assistant_conversations': assistantConversationsStore = []; list = assistantConversationsStore; break;
+              case 'profiles': profilesStore = []; list = profilesStore; break;
+            }
+            notifyAndSave(list);
+            return onfulfilled({ data: [], error: null });
           }
         };
-
-        const executeDeleteAll = async () => {
-          try {
-            const { data, error } = await realSupabase.from(table).delete().select();
-            if (error) throw error;
-            clearLocal(table);
-            return { data: data || [], error: null };
-          } catch (err: any) {
-            console.warn(`Supabase clear on "${table}" falling back to simulated stores:`, err.message || err);
-            clearLocal(table);
-            return { data: [], error: null };
-          }
-        };
-
-        const promise = new Promise<any>((resolve, reject) => {
-          executeDeleteAll().then(resolve, reject);
-        });
-
-        const deleteBuilder: any = promise;
-
-        deleteBuilder.eq = (col: string, val: any) => {
-          const execute = () => executeDelete(
-            item => item[col] !== val,
-            query => query.eq(col, val)
-          );
-          return new Promise<any>((resolve, reject) => {
-            execute().then(resolve, reject);
-          });
-        };
-
-        deleteBuilder.neq = (col: string, val: any) => {
-          const execute = () => executeDelete(
-            item => item[col] === val,
-            query => query.neq(col, val)
-          );
-          return new Promise<any>((resolve, reject) => {
-            execute().then(resolve, reject);
-          });
-        };
-
-        return deleteBuilder;
       }
     };
   }
 
+  // Live Subscription Bridge
   subscribe(table: string, callback: Callback) {
     if (!subscribers[table]) {
       subscribers[table] = [];
     }
     subscribers[table].push(callback);
-
-    let channel: any = null;
-    try {
-      channel = realSupabase
-        .channel(`${table}-changes-${Math.random().toString(36).substr(2, 5)}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: table },
-          () => {
-            callback();
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      console.warn('Real Supabase real-time subscription failed:', err);
-    }
-
     return {
       unsubscribe: () => {
         subscribers[table] = subscribers[table].filter(cb => cb !== callback);
-        if (channel) {
-          try {
-            realSupabase.removeChannel(channel);
-          } catch (e) {}
-        }
       }
     };
   }
 }
 
-export const supabase = new ResilientSupabase();
-
-// Seeder for real Supabase tables
-const seedRealSupabase = async () => {
-  try {
-    if (localStorage.getItem('fielda_supabase_seeded') === 'true') return;
-
-    console.info('Fielda: Checking if real Supabase tables need initial seeding...');
-    const { data: zData, error: zError } = await realSupabase.from('zones').select('id').limit(1);
-    if (zError) {
-      console.info('Fielda: Real Supabase tables are not created yet (expected if fresh db). Local simulation is active.');
-      return;
-    }
-
-    if (!zData || zData.length === 0) {
-      console.info('Fielda: Seeding initial fixture data to real Supabase tables...');
-      try { await realSupabase.from('zones').insert(initialZones); } catch (e) { console.warn('Error seeding zones:', e); }
-      try { await realSupabase.from('staff').insert(initialStaff); } catch (e) { console.warn('Error seeding staff:', e); }
-      try { await realSupabase.from('incidents').insert(initialIncidents); } catch (e) { console.warn('Error seeding incidents:', e); }
-      try { await realSupabase.from('comms_messages').insert(initialCommsMessages); } catch (e) { console.warn('Error seeding comms_messages:', e); }
-      try { await realSupabase.from('crowd_metrics').insert(initialCrowdMetrics); } catch (e) { console.warn('Error seeding crowd_metrics:', e); }
-      try { await realSupabase.from('ai_predictions').insert(initialAIPredictions); } catch (e) { console.warn('Error seeding ai_predictions:', e); }
-      try { await realSupabase.from('accessibility_requests').insert(initialAccessibilityRequests); } catch (e) { console.warn('Error seeding accessibility_requests:', e); }
-      try { await realSupabase.from('sensory_readings').insert(initialSensoryReadings); } catch (e) { console.warn('Error seeding sensory_readings:', e); }
-      try { await realSupabase.from('assistant_conversations').insert(initialConversations); } catch (e) { console.warn('Error seeding assistant_conversations:', e); }
-      try { await realSupabase.from('profiles').insert(initialProfiles); } catch (e) { console.warn('Error seeding profiles:', e); }
-
-      localStorage.setItem('fielda_supabase_seeded', 'true');
-      console.info('Fielda: Real Supabase seeded successfully!');
-    } else {
-      localStorage.setItem('fielda_supabase_seeded', 'true');
-      console.info('Fielda: Real Supabase already populated, skipping seeding.');
-    }
-  } catch (err) {
-    console.warn('Fielda: Real Supabase auto-seeding skipped:', err);
-  }
-};
-
-seedRealSupabase();
+export const supabase = new SupabaseSimulation();
