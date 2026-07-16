@@ -87,7 +87,7 @@ export const MobilityNavigator: React.FC<MobilityNavigatorProps> = ({ metrics })
       });
 
       const formattedStartNodes = uniqueStart.map(node => {
-        if (node.name.includes('Section 120') || node.name.includes('Sensory Room 202')) {
+        if (node.name.includes('Section 120') || node.name.includes('Sensory Room 202') || node.name.includes('Concourse West')) {
            return { ...node, name: node.name.startsWith('🚨') ? node.name : `🚨 ${node.name}` };
         }
         return node;

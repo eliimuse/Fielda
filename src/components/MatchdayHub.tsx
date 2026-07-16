@@ -27,29 +27,16 @@ export const MatchdayHub: React.FC<{
 }> = ({ setActiveScreen }) => {
   const [activeMatches, setActiveMatches] = useState([
     {
-      id: "m1",
-      round: "Semi-finals",
-      teamA: "France",
-      flagA: "🇫🇷",
-      teamB: "Spain",
-      flagB: "🇪🇸",
+      id: "m3",
+      round: "Final",
+      teamA: "Spain",
+      flagA: "🇪🇸",
+      teamB: "Argentina",
+      flagB: "🇦🇷",
       stadium: "MetLife Stadium",
       city: "East Rutherford, NJ",
       time: "12:30 AM",
-      date: "Wed, Jul 15",
-      status: "scheduled",
-    },
-    {
-      id: "m2",
-      round: "Semi-finals",
-      teamA: "England",
-      flagA: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-      teamB: "Argentina",
-      flagB: "🇦🇷",
-      stadium: "Mercedes-Benz Stadium",
-      city: "Atlanta, GA",
-      time: "12:30 AM",
-      date: "Thu, Jul 16",
+      date: "Mon, Jul 20",
       status: "scheduled",
     },
   ]);
@@ -287,6 +274,8 @@ export const MatchdayHub: React.FC<{
 
     setIsSosModalOpen(false);
     setAdditionalDetails("");
+    setRequestSubmitted(true);
+    setTimeout(() => setRequestSubmitted(false), 5000);
   };
 
   if (simplifiedNav) {
@@ -470,11 +459,7 @@ export const MatchdayHub: React.FC<{
                 </button>
               </div>
 
-              {requestSubmitted && (
-                <div className="bg-[#CCFF00]/20 border border-[#CCFF00] text-[#CCFF00] p-3 text-center text-xs font-semibold uppercase">
-                  ✅ Request received
-                </div>
-              )}
+              {/* Removed redundant inline alert */}
             </div>
           </div>
         </div>
@@ -639,12 +624,7 @@ export const MatchdayHub: React.FC<{
           </div>
         </div>
 
-        {requestSubmitted && (
-          <div className="bg-[#CCFF00]/10 border border-[#CCFF00]/30 text-[#CCFF00] p-3 rounded-sm flex items-center gap-3 text-xs font-semibold uppercase">
-            <ShieldCheck size={16} className="text-[#CCFF00]" />
-            Request received
-          </div>
-        )}
+        {/* Removed redundant inline alert */}
 
         {activeSosIncident && (
           <Card className="border-2 border-red-500 bg-red-950/45 p-5 space-y-4 rounded-sm animate-pulse shadow-2xl relative overflow-hidden z-20">
@@ -963,11 +943,14 @@ export const MatchdayHub: React.FC<{
               </p>
               <Button
                 variant="solid"
-                onClick={() => setIsSosModalOpen(true)}
+                onClick={() => {
+                  setIsSosModalOpen(true);
+                }}
                 className="w-full !bg-red-600 hover:!bg-red-500 text-white font-bold py-2 px-4 uppercase text-xs cursor-pointer min-h-[44px]"
               >
                 🔴 Trigger SOS Alert
               </Button>
+              {/* Removed redundant inline alert */}
             </Card>
 
             {renderTacticalFanAssistance("block md:hidden lg:block")}
