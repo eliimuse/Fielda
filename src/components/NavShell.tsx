@@ -36,7 +36,6 @@ export const NavShell: React.FC<NavShellProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('password123');
   const [authName, setAuthName] = useState('');
   const [authRole, setAuthRole] = useState<UserRole>('organizer');
   const [authIsSignUp, setAuthIsSignUp] = useState(false);
@@ -110,7 +109,6 @@ export const NavShell: React.FC<NavShellProps> = ({
     if (authIsSignUp) {
       await supabase.auth.signUp({
         email: authEmail || `${authName.toLowerCase().replace(/\s+/g, '')}@fielda.org`,
-        password: authPassword,
         options: {
           data: {
             full_name: authName || 'Guest User',
@@ -121,28 +119,11 @@ export const NavShell: React.FC<NavShellProps> = ({
       });
     } else {
       await supabase.auth.signInWithPassword({
-        email: authEmail || (authRole === 'organizer' ? 'org@fielda.org' : authRole === 'staff' ? 'staff@fielda.org' : 'fan@fielda.org'),
-        password: authPassword
+        email: authEmail || (authRole === 'organizer' ? 'org@fielda.org' : authRole === 'staff' ? 'staff@fielda.org' : 'fan@fielda.org')
       });
     }
-
-    const activeProf = supabase.auth.getProfile();
-    setProfile(activeProf);
-
-    // Redirect user to the correct screen and module based on their role
-    if (activeProf) {
-      if (activeProf.role === 'fan') {
-        setModule('unitypath');
-        setActiveScreen('matchday');
-      } else {
-        setModule('operationsIntelligence');
-        setActiveScreen('command');
-      }
-    }
-
     setIsAuthModalOpen(false);
     setAuthEmail('');
-    setAuthPassword('password123');
     setAuthName('');
     setShowProfileDropdown(false);
   };
@@ -685,8 +666,7 @@ export const NavShell: React.FC<NavShellProps> = ({
             <label className="block text-xs font-mono uppercase tracking-wide text-gray-400 mb-1">Security Token (Password)</label>
             <input 
               type="password" 
-              value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
+              defaultValue="password123"
               placeholder="••••••••"
               className={`w-full p-2.5 rounded text-sm focus:outline-none focus:ring-1 border ${
                 isOps 

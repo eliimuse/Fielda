@@ -135,9 +135,9 @@ const initialConversations: AssistantConversation[] = [
 ];
 
 const initialProfiles: Profile[] = [
-  { id: 'user-organizer', full_name: 'Dev Organizer', role: 'organizer', language_pref: 'en', created_at: new Date().toISOString(), email: 'org@fielda.org' },
-  { id: 'user-staff', full_name: 'Dev Staff Member', role: 'staff', language_pref: 'es', created_at: new Date().toISOString(), email: 'staff@fielda.org' },
-  { id: 'user-fan', full_name: 'Dev Fan Guest', role: 'fan', language_pref: 'en', created_at: new Date().toISOString(), email: 'fan@fielda.org' }
+  { id: 'user-organizer', full_name: 'Dev Organizer', role: 'organizer', language_pref: 'en', created_at: new Date().toISOString() },
+  { id: 'user-staff', full_name: 'Dev Staff Member', role: 'staff', language_pref: 'es', created_at: new Date().toISOString() },
+  { id: 'user-fan', full_name: 'Dev Fan Guest', role: 'fan', language_pref: 'en', created_at: new Date().toISOString() }
 ];
 
 // Memory Stores
@@ -188,8 +188,7 @@ class SupabaseSimulation {
         full_name,
         role,
         language_pref,
-        created_at: new Date().toISOString(),
-        email
+        created_at: new Date().toISOString()
       };
       
       profilesStore.push(newProfile);
@@ -206,16 +205,10 @@ class SupabaseSimulation {
     signInWithPassword: async (params: { email: string; password?: string }) => {
       const email = params.email;
       // Search profiles. Match a profile for testing easily.
-      // 1. Search by exact email match
-      let profile = profilesStore.find(p => p.email === email);
-      
-      // 2. Fallback to name inclusion
+      // If none, create a temporary fan profile
+      let profile = profilesStore.find(p => p.full_name.toLowerCase().includes(email.split('@')[0].toLowerCase()));
       if (!profile) {
-        profile = profilesStore.find(p => p.full_name.toLowerCase().includes(email.split('@')[0].toLowerCase()));
-      }
-      
-      // 3. Fallback to matching by role keywords in email
-      if (!profile) {
+        // Fall back to matching by role
         if (email.includes('org')) {
           profile = profilesStore.find(p => p.role === 'organizer');
         } else if (email.includes('staff')) {
@@ -231,8 +224,7 @@ class SupabaseSimulation {
           full_name: email.split('@')[0],
           role: 'fan',
           language_pref: 'en',
-          created_at: new Date().toISOString(),
-          email
+          created_at: new Date().toISOString()
         };
         profilesStore.push(profile);
         setLocal('profiles', profilesStore);

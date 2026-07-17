@@ -6,7 +6,6 @@ export interface Profile {
   role: UserRole;
   language_pref: string;
   created_at: string;
-  email?: string;
 }
 
 export interface Stadium {
