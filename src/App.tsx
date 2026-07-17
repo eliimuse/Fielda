@@ -16,8 +16,8 @@ import { SensoryMap } from './components/SensoryMap';
 import { MobilityNavigator } from './components/MobilityNavigator';
 
 export default function App() {
-  const [currentModule, setModule] = useState<ThemeModule>('operationsIntelligence');
-  const [activeScreen, setActiveScreen] = useState<string>('command');
+  const [currentModule, setModule] = useState<ThemeModule>('unitypath');
+  const [activeScreen, setActiveScreen] = useState<string>('matchday');
   
   const [metrics, setMetrics] = useState({ visitors: 42389, waitTime: 11, aqi: 34, temp: 75 });
   
