@@ -50,6 +50,7 @@ export interface Incident {
   assigned_role?: string;
   assigned_staff_name?: string;
   assigned_reason?: string;
+  fan_message?: string;
 }
 
 export interface CommsMessage {
@@ -58,6 +59,7 @@ export interface CommsMessage {
   original_text: string;
   original_lang: string;
   translated_text: string;
+  translated_lang?: string;
   sender: string;
   created_at: string;
 }

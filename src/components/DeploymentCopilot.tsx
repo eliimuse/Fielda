@@ -143,6 +143,7 @@ export const DeploymentCopilot: React.FC = () => {
       original_text: `[AI System Action Committed]: Rerouting directive executed. Action detail: ${actionText}`,
       original_lang: 'en',
       translated_text: `[Acción del Sistema de IA Cometida]: Directiva de desvío ejecutada. Detalle: ${actionText}`,
+      translated_lang: 'es',
       sender: 'Vanguard AI Co-pilot',
     });
 
@@ -177,6 +178,7 @@ export const DeploymentCopilot: React.FC = () => {
         original_text: `Manual reassignment: ${staffObj.name} deployed to ${zoneObj.name}.`,
         original_lang: 'en',
         translated_text: `Reasignación manual: ${staffObj.name} desplegado en ${zoneObj.name}.`,
+        translated_lang: 'es',
         sender: 'Manual Reroute Command',
       });
     }

@@ -72,6 +72,7 @@ const initialCommsMessages: CommsMessage[] = [
     original_text: 'Hay una congestión severa en la entrada oeste. Necesitamos tres auxiliares adicionales.',
     original_lang: 'es',
     translated_text: 'There is a severe congestion at the west entrance. We need three additional assistants.',
+    translated_lang: 'en',
     sender: 'Alejandro Gomez (Crowd Marshal)',
     created_at: new Date(Date.now() - 10 * 60000).toISOString()
   },
@@ -81,6 +82,7 @@ const initialCommsMessages: CommsMessage[] = [
     original_text: 'First aid unit dispatched to Section 120 for minor heat exhaustion.',
     original_lang: 'en',
     translated_text: 'Unidad de primeros auxilios enviada a la Sección 120 por agotamiento leve por calor.',
+    translated_lang: 'es',
     sender: 'Command Center Dispatcher',
     created_at: new Date(Date.now() - 5 * 60000).toISOString()
   }

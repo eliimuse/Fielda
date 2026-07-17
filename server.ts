@@ -39,44 +39,230 @@ function getGeminiClient(): GoogleGenAI | null {
 
 // SIMULATOR: Context-aware high-fidelity backups if API key isn't provided
 function simulateTranslation(text: string, targetLang: string): string {
-  const normalized = (text || '').toLowerCase();
-  
-  // Custom smart translations for common stadium situations
-  if (normalized.includes('congestión') || normalized.includes('severe congestion')) {
-    if (targetLang.toLowerCase() === 'en' || targetLang.toLowerCase().startsWith('en')) {
-      return 'There is severe congestion at the west entrance. We need three additional assistants.';
-    } else {
-      return 'Hay una congestión severa en la entrada oeste. Necesitamos tres auxiliares adicionales.';
-    }
-  }
-  
-  if (normalized.includes('first aid') || normalized.includes('primeros auxilios')) {
-    if (targetLang.toLowerCase() === 'es' || targetLang.toLowerCase().startsWith('es')) {
-      return 'Unidad de primeros auxilios enviada a la Sección 120 por agotamiento leve por calor.';
-    } else {
-      return 'First aid unit dispatched to Section 120 for minor heat exhaustion.';
-    }
-  }
+  const normalized = (text || '').trim();
+  const lang = targetLang.substring(0, 2).toLowerCase();
 
-  if (normalized.includes('wheelchair') || normalized.includes('silla de ruedas')) {
-    if (targetLang.toLowerCase() === 'es') {
-      return '¿Hay asientos accesibles para sillas de ruedas cerca de la Sección 120?';
-    } else {
-      return 'Is there wheelchair accessible seating near Section 120?';
+  // 1. Exact sentence translation mappings
+  const database: Record<string, Record<string, string>> = {
+    "the messages are not getting translated properly": {
+      en: "The messages are not getting translated properly",
+      es: "Los mensajes no se están traduciendo correctamente",
+      pt: "As mensagens não estão sendo traduzidas corretamente",
+      ja: "メッセージが正しく翻訳されていません"
+    },
+    "first aid unit dispatched to section 120 for minor heat exhaustion.": {
+      en: "First aid unit dispatched to Section 120 for minor heat exhaustion.",
+      es: "Unidad de primeros auxilios enviada a la Sección 120 por agotamiento leve por calor.",
+      pt: "Unidade de primeiros socorros enviada para a Seção 120 por exaustão leve de calor.",
+      ja: "軽度の熱中症のため、第120セクションに救急ユニットが派遣されました。"
+    },
+    "there is severe congestion at the west entrance. we need three additional assistants.": {
+      en: "There is severe congestion at the west entrance. We need three additional assistants.",
+      es: "Hay una congestión severa en la entrada oeste. Necesitamos tres auxiliares adicionales.",
+      pt: "Há um congestionamento grave na entrada oeste. Precisamos de três assistentes adicionais.",
+      ja: "西口で深刻な混雑が発生しています。追加のアシスタントが3名必要です。"
+    },
+    "is there wheelchair accessible seating near section 120?": {
+      en: "Is there wheelchair accessible seating near Section 120?",
+      es: "¿Hay asientos accesibles para sillas de ruedas cerca de la Sección 120?",
+      pt: "Existe assento acessível para cadeira de rodas perto da Seção 120?",
+      ja: "第120セクションの近くに車椅子対応の座席はありますか？"
+    },
+    "feel free to contact us if further help is needed!": {
+      en: "Feel free to contact us if further help is needed!",
+      es: "¡No dude en contactarnos si necesita más ayuda!",
+      pt: "Sinta-se à vontade para nos contatar se precisar de mais ajuda!",
+      ja: "さらにサポートが必要な場合は、お気軽にお問い合わせください！"
     }
-  }
-
-  // Fallback translators
-  const prefix = `[AI Translation to ${targetLang}]: `;
-  const mockTranslations: Record<string, string> = {
-    'es': `Señal recibida: ${text} (Procesado por Fielda Node)`,
-    'en': `Signal received: ${text} (Processed by Fielda Node)`,
-    'ja': `信号受信: ${text} (Fieldaによって翻訳)`,
-    'pt': `Sinal recebido: ${text} (Traduzido por Fielda)`
   };
-  
-  const code = targetLang.substring(0, 2).toLowerCase();
-  return mockTranslations[code] || `${prefix}${text}`;
+
+  const cleanString = (s: string) => s.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").replace(/\s+/g, " ").trim();
+  const lookupKey = cleanString(normalized);
+
+  for (const key of Object.keys(database)) {
+    const entry = database[key];
+    const match = Object.values(entry).some(val => cleanString(val) === lookupKey);
+    if (match) {
+      return entry[lang] || entry['en'];
+    }
+  }
+
+  // 2. Structured patterns (e.g. SOS alerts, AI Dispatch, Manual reassignments)
+  if (/🚨\s*\[CRITICAL SOS\]|🚨\s*\[SOS CRÍTICO\]/i.test(normalized)) {
+    let type = 'Emergency';
+    let location = 'Zone';
+    
+    if (/fire|fuego|fogo|incendio/i.test(normalized)) type = 'Fire';
+    else if (/stampede|estampida|tumulto/i.test(normalized)) type = 'Stampede';
+    else if (/medical|médico|cardiac|trauma/i.test(normalized)) type = 'Medical';
+    else if (/missing|niño|desaparecida/i.test(normalized)) type = 'Missing Person';
+    
+    const zoneMatch = normalized.match(/(Zone\s+[A-Za-z0-9]+|Sector\s+[A-Za-z0-9]+|Gate\s+[A-Za-z0-9]+)/i);
+    if (zoneMatch) {
+      location = zoneMatch[0];
+    }
+    
+    const emergencyTranslations: Record<string, Record<string, string>> = {
+      'Fire': { en: 'Fire Incident', es: 'Incidente de Fuego', pt: 'Incidente de Fogo', ja: '火災事故' },
+      'Stampede': { en: 'Stampede Danger', es: 'Peligro de Estampida', pt: 'Perigo de Tumulto', ja: '将棋倒しの危険' },
+      'Medical': { en: 'Medical Emergency', es: 'Emergencia Médica', pt: 'Emergência Médica', ja: '救急医療事態' },
+      'Missing Person': { en: 'Missing Person', es: 'Persona Desaparecida', pt: 'Pessoa Desaparecida', ja: '行方不明者' },
+      'Emergency': { en: 'Emergency', es: 'Emergencia', pt: 'Emergência', ja: '緊急事態' }
+    };
+    
+    const transType = emergencyTranslations[type]?.[lang] || type;
+    if (lang === 'es') {
+      return `🚨 [SOS CRÍTICO]: ¡Se reporta ${transType} en ${location}!`;
+    } else if (lang === 'pt') {
+      return `🚨 [SOS CRÍTICO]: ${transType} relatado em ${location}!`;
+    } else if (lang === 'ja') {
+      return `🚨 [緊急SOS]: ${location}で${transType}が報告されました！`;
+    } else {
+      return `🚨 [CRITICAL SOS]: ${transType} reported at ${location}!`;
+    }
+  }
+
+  if (/🚨\s*\[DISPATCH SUCCESSFUL\]|🚨\s*\[DESPACHO EXITOSO\]|🚨\s*\[DISPATCH BEM-SUCEDIDO\]/i.test(normalized)) {
+    let role = 'Staff';
+    let name = 'Responder';
+    let reason = 'Assistance';
+    
+    const roleMatches = normalized.match(/:\s*([A-Za-z\s]+)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+dispatched/i) ||
+                        normalized.match(/:\s*([A-Za-z\s]+)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+enviado/i);
+    if (roleMatches) {
+      role = roleMatches[1].trim();
+      name = roleMatches[2].trim();
+    } else {
+      const nameMatch = normalized.match(/([A-Z][a-z]+\s+[A-Z][a-z]+)/);
+      if (nameMatch) name = nameMatch[1];
+    }
+    
+    const reasonMatch = normalized.match(/Reason:\s*(.*)$/i) || normalized.match(/Razón:\s*(.*)$/i) || normalized.match(/Motivo:\s*(.*)$/i);
+    if (reasonMatch) {
+      reason = reasonMatch[1].trim();
+    }
+    
+    const roleTranslations: Record<string, Record<string, string>> = {
+      'first responder': { en: 'First Responder', es: 'Primer Respondiente', pt: 'Primeiro Respondente', ja: 'ファーストレスポンダー' },
+      'medical': { en: 'Medical Staff', es: 'Personal Médico', pt: 'Equipe Médica', ja: '医療スタッフ' },
+      'doctor': { en: 'Doctor', es: 'Médico', pt: 'Médico', ja: '医師' },
+      'nurse': { en: 'Nurse', es: 'Enfermero', pt: 'Enfermeiro', ja: '看護師' },
+      'crowd marshal': { en: 'Crowd Marshal', es: 'Control de Multitudes', pt: 'Controlador de Multidão', ja: '群衆誘導員' },
+      'security': { en: 'Security Guard', es: 'Guardia de Seguridad', pt: 'Guarda de Segurança', ja: '警備員' },
+      'marshal': { en: 'Marshal', es: 'Alguacil', pt: 'Marechal', ja: 'マーシャル' },
+      'accessibility lead': { en: 'Accessibility Lead', es: 'Líder de Accesibilidad', pt: 'Líder de Acessibilidade', ja: 'アクセシビリティ担当' }
+    };
+    const transRole = roleTranslations[role.toLowerCase()]?.[lang] || role;
+    
+    const reasonTranslations: Record<string, Record<string, string>> = {
+      'medical emergency': { en: 'Medical emergency', es: 'Emergencia médica', pt: 'Emergência médica', ja: '医療救急事態' },
+      'cardiac event': { en: 'Cardiac event', es: 'Evento cardíaco', pt: 'Evento cardíaco', ja: '心疾患事態' },
+      'trauma response': { en: 'Trauma response', es: 'Respuesta al trauma', pt: 'Resposta a trauma', ja: '外傷対応' },
+      'fire safety': { en: 'Fire safety check', es: 'Control de seguridad contra incendios', pt: 'Verificação de segurança contra incêndio', ja: '火災安全確認' },
+      'stampede control': { en: 'Stampede prevention', es: 'Prevención de estampidas', pt: 'Prevenção de tumultos', ja: '将棋倒し防止対応' },
+      'missing child assistance': { en: 'Missing child assistance', es: 'Asistencia para niño perdido', pt: 'Assistência a criança desaparecida', ja: '迷子支援' }
+    };
+    const transReason = reasonTranslations[reason.toLowerCase()]?.[lang] || reason;
+    
+    if (lang === 'es') {
+      return `🚨 [DESPACHO EXITOSO]: ${transRole} ${name} enviado al Sector. Razón: ${transReason}`;
+    } else if (lang === 'pt') {
+      return `🚨 [DESPACHO BEM-SUCEDIDO]: ${transRole} ${name} enviado ao Setor. Motivo: ${transReason}`;
+    } else if (lang === 'ja') {
+      return `🚨 [派遣成功]: ${transRole}の${name}がセクターに派遣されました。理由: ${transReason}`;
+    } else {
+      return `🚨 [DISPATCH SUCCESSFUL]: ${transRole} ${name} dispatched to Sector. Reason: ${transReason}`;
+    }
+  }
+
+  if (/\[ACCESSIBILITY REQUEST\]|\[SOLICITUD DE ACCESIBILIDAD\]/i.test(normalized)) {
+    let service = 'assistance';
+    const serviceMatch = normalized.match(/required:\s*(.*)$/i) || normalized.match(/requerido:\s*(.*)$/i);
+    if (serviceMatch) {
+      service = serviceMatch[1].trim();
+    }
+    
+    const serviceTranslations: Record<string, Record<string, string>> = {
+      'wheelchair assistance': { en: 'Wheelchair Assistance', es: 'Asistencia con Silla de Ruedas', pt: 'Assistência com Cadeira de Rodas', ja: '車椅子支援' },
+      'sign language interpreter': { en: 'Sign Language Interpreter', es: 'Intérprete de Lengua de Señas', pt: 'Intérprete de Língua de Sinais', ja: '手話通訳' },
+      'guide dog escort': { en: 'Guide Dog Escort', es: 'Escolta de Perro Guía', pt: 'Escolta de Cão-Guia', ja: '盲導犬同行支援' }
+    };
+    const transService = serviceTranslations[service.toLowerCase()]?.[lang] || service;
+    
+    if (lang === 'es') {
+      return `[Solicitud de accesibilidad]: El aficionado requiere asistencia en la entrada. Servicio requerido: ${transService}.`;
+    } else if (lang === 'pt') {
+      return `[Solicitação de acessibilidade]: O torcedor necessita de assistência na entrada. Serviço necessário: ${transService}.`;
+    } else if (lang === 'ja') {
+      return `[アクセシビリティ申請]: 入口でサポートが必要なファンがいます。必要なサービス: ${transService}。`;
+    } else {
+      return `[Accessibility request]: Fan requires assistance at entrance. Service required: ${transService}.`;
+    }
+  }
+
+  // 3. Fallback glossary word/phrase-by-phrase replacement for custom messages
+  const glossary: Record<string, Record<string, string>> = {
+    "the messages": { en: "The messages", es: "Los mensajes", pt: "As mensagens", ja: "メッセージ" },
+    "are not getting": { en: "are not getting", es: "no se están", pt: "não estão sendo", ja: "が正しく～されていません" },
+    "translated properly": { en: "translated properly", es: "traduciendo correctamente", pt: "traduzidas corretamente", ja: "翻訳" },
+    "are not getting translated properly": { en: "are not getting translated properly", es: "no se están traduciendo correctamente", pt: "não estão sendo traduzidas corretamente", ja: "が正しく翻訳されていません" },
+    "first aid": { en: "first aid", es: "primeros auxilios", pt: "primeiros socorros", ja: "救急手当" },
+    "heat exhaustion": { en: "heat exhaustion", es: "agotamiento por calor", pt: "exaustão por calor", ja: "熱中症" },
+    "severe congestion": { en: "severe congestion", es: "congestión severa", pt: "congestionamento grave", ja: "深刻な混雑" },
+    "west entrance": { en: "west entrance", es: "entrada oeste", pt: "entrada oeste", ja: "西口" },
+    "wheelchair assistance": { en: "wheelchair assistance", es: "asistencia con silla de ruedas", pt: "assistência de cadeira de rodas", ja: "車椅子対応の座席" },
+    "need help": { en: "need help", es: "necesitamos ayuda", pt: "precisamos de ajuda", ja: "助けが必要です" },
+    "all clear": { en: "all clear", es: "todo despejado", pt: "tudo limpo", ja: "異常なし" },
+    "please respond": { en: "please respond", es: "por favor responda", pt: "por favor responda", ja: "応答してください" },
+    "copy that": { en: "copy that", es: "copiado", pt: "entendido", ja: "了解" },
+    "over and out": { en: "over and out", es: "corto y cierro", pt: "câmbio e desligo", ja: "以上、通信終了" },
+    "not getting translated": { en: "not getting translated", es: "no se están traduciendo", pt: "não estão sendo traduzidas", ja: "翻訳されていない" },
+    "not translating": { en: "not translating", es: "no traduciendo", pt: "não traduzindo", ja: "翻訳していない" },
+    "hello": { en: "hello", es: "hola", pt: "olá", ja: "こんにちは" },
+    "stadium": { en: "stadium", es: "estadio", pt: "estádio", ja: "スタジアム" },
+    "operations": { en: "operations", es: "operaciones", pt: "operações", ja: "運営" },
+    "emergency": { en: "emergency", es: "emergencia", pt: "emergência", ja: "緊急" },
+    "incident": { en: "incident", es: "incidente", pt: "incidente", ja: "インシデント" },
+    "staff": { en: "staff", es: "personal", pt: "equipe", ja: "スタッフ" },
+    "volunteer": { en: "volunteer", es: "voluntario", pt: "voluntário", ja: "ボランティア" },
+    "zone": { en: "zone", es: "zona", pt: "zona", ja: "ゾーン" },
+    "sector": { en: "sector", es: "sector", pt: "setor", ja: "セクター" },
+    "gate": { en: "gate", es: "puerta", pt: "portão", ja: "ゲート" },
+    "entrance": { en: "entrance", es: "entrada", pt: "entrada", ja: "入口" },
+    "exit": { en: "exit", es: "salida", pt: "saída", ja: "出口" },
+    "crowd": { en: "crowd", es: "multitud", pt: "multidão", ja: "観客" },
+    "safety": { en: "safety", es: "seguridad", pt: "segurança", ja: "安全" },
+    "medical": { en: "medical", es: "médico", pt: "médico", ja: "医療" },
+    "assistance": { en: "assistance", es: "asistencia", pt: "assistência", ja: "アシスト" },
+    "water": { en: "water", es: "agua", pt: "água", ja: "水" },
+    "fire": { en: "fire", es: "fuego", pt: "fogo", ja: "火災" },
+    "help": { en: "help", es: "ayuda", pt: "ajuda", ja: "助け" },
+    "report": { en: "report", es: "reporte", pt: "relatório", ja: "報告" },
+    "active": { en: "active", es: "activo", pt: "ativo", ja: "アクティブ" }
+  };
+
+  let resultText = text;
+  const sortedKeys = Object.keys(glossary).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    const translation = glossary[key][lang];
+    if (translation && translation.toLowerCase() !== key.toLowerCase()) {
+      const regex = new RegExp('\\b' + key + '\\b', 'gi');
+      resultText = resultText.replace(regex, translation);
+    }
+  }
+
+  // If the translation produced no change and it's a completely custom text, return a clean notice with prefix
+  if (resultText === text) {
+    const mockTranslations: Record<string, string> = {
+      'es': `Señal recibida: ${text} (Procesado por Fielda Node)`,
+      'en': `Signal received: ${text} (Processed by Fielda Node)`,
+      'ja': `信号受信: ${text} (Fieldaによって翻訳)`,
+      'pt': `Sinal recebido: ${text} (Traduzido por Fielda)`
+    };
+    return mockTranslations[lang] || `[AI Translation to ${targetLang}]: ${text}`;
+  }
+
+  return resultText;
 }
 
 function simulateCrowdPrediction(zoneName: string, occupancyPct: number) {
@@ -141,14 +327,18 @@ function parseCleanJSON(text: string): any {
 }
 
 // --- API RETRY HELPER ---
-async function callGeminiWithRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+async function callGeminiWithRetry<T>(fn: () => Promise<T>, retries = 2, delay = 300): Promise<T> {
   try {
     return await fn();
   } catch (error: any) {
     const status = error.status || error.statusCode;
-    const isTransient = status === 503 || status === 429 || error.message?.includes('UNAVAILABLE') || error.message?.includes('high demand') || error.message?.includes('quota');
+    const is429 = status === 429 || error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429');
+    if (is429) {
+      throw error;
+    }
+    const isTransient = status === 503 || error.message?.includes('UNAVAILABLE') || error.message?.includes('high demand') || error.message?.includes('503');
     if (isTransient && retries > 0) {
-      console.warn(`Gemini call failed with ${status || error.message}. Retrying in ${delay}ms... (${retries} retries left)`);
+      console.log(`Gemini status: ${status || 'transient'}. Re-trying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return callGeminiWithRetry(fn, retries - 1, delay * 2);
     }
@@ -300,122 +490,129 @@ app.post('/api/gemini/crowd-prediction', async (req, res) => {
 
 // 4. Intelligent Emergency Staff Assignment
 app.post('/api/gemini/assign-staff', async (req, res) => {
-  const { incident, staffList, zones } = req.body;
-  if (!incident) {
-    return res.status(400).json({ error: 'Missing incident details' });
-  }
-
-  const ai = getGeminiClient();
-
-  // Helper local matcher function for robust fallback
-  const getFallbackAssignment = () => {
-    try {
-      // Basic deterministic backup assignment
-      const activeStaff = (staffList || []).filter(
-        (s: any) => s.stadium_id === incident.stadium_id && s.status !== 'off_duty'
-      );
-      if (activeStaff.length === 0) return null;
-
-      // Filter by role preference
-      let rolePreferred: string[] = [];
-      const titleLower = (incident.title || '').toLowerCase();
-      const descLower = (incident.description || '').toLowerCase();
-      
-      if (titleLower.includes('medical') || descLower.includes('medical') || titleLower.includes('cardiac') || titleLower.includes('trauma')) {
-        rolePreferred = ['First Responder', 'Medical', 'Doctor', 'Nurse'];
-      } else if (titleLower.includes('fire') || titleLower.includes('stampede') || titleLower.includes('hazard')) {
-        rolePreferred = ['Crowd Marshal', 'Security', 'Marshal'];
-      } else if (titleLower.includes('missing') || titleLower.includes('amber') || titleLower.includes('child')) {
-        rolePreferred = ['Accessibility Lead', 'Crowd Marshal', 'Security'];
-      }
-
-      let match = activeStaff.find((s: any) => rolePreferred.some(r => (s?.role || '').toLowerCase().includes(r.toLowerCase())));
-      if (!match) match = activeStaff[0]; // fallback to any active staff
-
-      const zoneObj = (zones || []).find((z: any) => z.id === incident.zone_id);
-      return {
-        assignedStaffId: match?.id || 'fallback-staff',
-        assignedStaffName: match?.name || 'Fallback Staff',
-        assignedStaffRole: match?.role || 'Responder',
-        reason: `[AI Fallback] ${match?.name || 'Staff'} assigned based on active duty role matches (${match?.role || 'Responder'}) for Sector: ${zoneObj?.name || 'Assigned Zone'}.`
-      };
-    } catch (e: any) {
-      console.error('getFallbackAssignment error:', e.message);
-      return null;
-    }
-  };
-
-  if (!ai) {
-    const fallback = getFallbackAssignment();
-    return res.json({ assignment: fallback, source: 'simulator' });
-  }
-
   try {
-    const zoneObj = (zones || []).find((z: any) => z.id === incident.zone_id);
-    const systemPrompt = `You are the Fielda Emergency Dispatch AI Core for the FIFA World Cup 2026.
-    Your job is to intelligently select the single best staff member from the available staff list to respond to an emergency incident.
-    
-    Emergency incident details:
-    - Type: ${incident.title}
-    - Severity: ${incident.severity}
-    - Location: ${zoneObj?.name || 'Unknown Zone'}
-    - Description: ${incident.description}
+    const { incident, staffList, zones } = req.body;
+    if (!incident) {
+      return res.status(400).json({ error: 'Missing incident details' });
+    }
 
-    Select the most suitable staff member based on:
-    1. Role matching (e.g. "First Responder" or "Medical" for Cardiac/Trauma; "Crowd Marshal" or "Security" for Fire/Stampede/Crowd; "Accessibility Lead" or "Crowd Marshal" for Missing Person).
-    2. Status: Favor "on_duty" or "standby" staff. NEVER assign "off_duty" staff.
-    3. Proximity / Language: Match staff who speak matching languages if relevant, or who are situated close to the location.`;
+    const ai = getGeminiClient();
 
-    const prompt = `Available Staff list for stadium ${incident.stadium_id}:
-    ${JSON.stringify(staffList || [])}
-    
-    Analyze the available staff and choose the single absolute best match. Provide their ID, name, role, and a clear concise reason why they are selected.`;
+    // Helper local matcher function for robust fallback
+    const getFallbackAssignment = () => {
+      try {
+        // Basic deterministic backup assignment
+        const activeStaff = (staffList || []).filter(
+          (s: any) => s && s.stadium_id === incident.stadium_id && s.status !== 'off_duty'
+        );
+        if (activeStaff.length === 0) return null;
 
-    const response = await callGeminiWithRetry(() => ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            assignedStaffId: {
-              type: Type.STRING,
-              description: "The unique ID of the selected staff member."
-            },
-            assignedStaffName: {
-              type: Type.STRING,
-              description: "The name of the selected staff member."
-            },
-            assignedStaffRole: {
-              type: Type.STRING,
-              description: "The role of the selected staff member."
-            },
-            reason: {
-              type: Type.STRING,
-              description: "Brief (1 sentence) explanation of why this staff member is perfectly suited."
-            }
-          },
-          required: ["assignedStaffId", "assignedStaffName", "assignedStaffRole", "reason"]
+        // Filter by role preference
+        let rolePreferred: string[] = [];
+        const titleLower = (incident.title || '').toLowerCase();
+        const descLower = (incident.description || '').toLowerCase();
+        
+        if (titleLower.includes('medical') || descLower.includes('medical') || titleLower.includes('cardiac') || titleLower.includes('trauma')) {
+          rolePreferred = ['First Responder', 'Medical', 'Doctor', 'Nurse'];
+        } else if (titleLower.includes('fire') || titleLower.includes('stampede') || titleLower.includes('hazard')) {
+          rolePreferred = ['Crowd Marshal', 'Security', 'Marshal'];
+        } else if (titleLower.includes('missing') || titleLower.includes('amber') || titleLower.includes('child')) {
+          rolePreferred = ['Accessibility Lead', 'Crowd Marshal', 'Security'];
         }
+
+        let match = activeStaff.find((s: any) => s && rolePreferred.some(r => (s.role || '').toLowerCase().includes(r.toLowerCase())));
+        if (!match) match = activeStaff[0]; // fallback to any active staff
+
+        const zoneObj = (zones || []).find((z: any) => z && z.id === incident.zone_id);
+
+        return {
+          assignedStaffId: match?.id || 'fallback-staff',
+          assignedStaffName: match?.name || 'Fallback Staff',
+          assignedStaffRole: match?.role || 'Responder',
+          reason: `[AI Fallback] ${match?.name || 'Staff'} assigned based on active duty role matches (${match?.role || 'Responder'}) for Sector: ${zoneObj?.name || 'Assigned Zone'}.`,
+          fanMessage: "Feel free to contact us if further help is needed!"
+        };
+      } catch (e: any) {
+        console.error('getFallbackAssignment error:', e.message);
+        return null;
       }
-    }));
+    };
 
-    const rawText = response.text || '{}';
-    const result = parseCleanJSON(rawText);
-
-    if (!result.assignedStaffId) {
-      throw new Error("Invalid output format: missing assignedStaffId");
+    if (!ai) {
+      const fallback = getFallbackAssignment();
+      return res.json({ assignment: fallback, source: 'simulator' });
     }
 
-    res.json({ assignment: result, source: 'gemini' });
-  } catch (error: any) {
-    const isQuota = error.status === 429 || (error.message && error.message.includes('quota'));
-    if (!isQuota) {
-      console.warn("AI Assignment error:", error.message);
+    try {
+      const zoneObj = (zones || []).find((z: any) => z && z.id === incident.zone_id);
+      const systemPrompt = `You are the Fielda Emergency Dispatch AI Core for the FIFA World Cup 2026.
+      Your job is to intelligently select the single best staff member from the available staff list to respond to an emergency incident.
+      
+      Emergency incident details:
+      - Type: ${incident.title}
+      - Severity: ${incident.severity}
+      - Location: ${zoneObj?.name || 'Unknown Zone'}
+      - Description: ${incident.description}
+
+      Select the most suitable staff member based on:
+      1. Role matching (e.g. "First Responder" or "Medical" for Cardiac/Trauma; "Crowd Marshal" or "Security" for Fire/Stampede/Crowd; "Accessibility Lead" or "Crowd Marshal" for Missing Person).
+      2. Status: Favor "on_duty" or "standby" staff. NEVER assign "off_duty" staff.
+      3. Proximity / Language: Match staff who speak matching languages if relevant, or who are situated close to the location.`;
+
+      const prompt = `Available Staff list for stadium ${incident.stadium_id}:
+      ${JSON.stringify(staffList || [])}
+      
+      Analyze the available staff and choose the single absolute best match. Provide their ID, name, role, and a clear concise reason why they are selected.`;
+
+      const response = await callGeminiWithRetry(() => ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              assignedStaffId: {
+                type: Type.STRING,
+                description: "The unique ID of the selected staff member."
+              },
+              assignedStaffName: {
+                type: Type.STRING,
+                description: "The name of the selected staff member."
+              },
+              assignedStaffRole: {
+                type: Type.STRING,
+                description: "The role of the selected staff member."
+              },
+              reason: {
+                type: Type.STRING,
+                description: "Brief (1 sentence) explanation of why this staff member is perfectly suited."
+              }
+            },
+            required: ["assignedStaffId", "assignedStaffName", "assignedStaffRole", "reason"]
+          }
+        }
+      }));
+
+      const rawText = response.text || '{}';
+      const result = parseCleanJSON(rawText);
+
+      if (!result.assignedStaffId) {
+        throw new Error("Invalid output format: missing assignedStaffId");
+      }
+
+      res.json({ assignment: result, source: 'gemini' });
+    } catch (error: any) {
+      const isQuota = error.status === 429 || (error.message && error.message.includes('quota'));
+      if (!isQuota) {
+        console.warn("AI Assignment error:", error.message);
+      }
+      res.json({ assignment: getFallbackAssignment(), source: 'simulator-fallback', error: error.message });
     }
-    res.json({ assignment: getFallbackAssignment(), source: 'simulator-fallback', error: error.message });
+  } catch (globalError: any) {
+    console.error("Global route error in assign-staff:", globalError);
+    res.status(500).json({ error: globalError.message || "Internal Server Error" });
   }
 });
 

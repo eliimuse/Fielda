@@ -221,7 +221,19 @@ export const MatchdayHub: React.FC<{
       original_text: `[Accessibility request]: Fan requires assistance at Gate A entrance. Service required: ${label}.`,
       original_lang: "en",
       translated_text: `[Solicitud de accesibilidad]: El aficionado requiere asistencia en la entrada de la Puerta A. Servicio requerido: ${label}.`,
+      translated_lang: "es",
       sender: "Unity Path Fan Companion",
+    });
+
+    // Insert into incidents as well with medium severity to show in active tactical alerts
+    await supabase.from("incidents").insert({
+      stadium_id: stadiumId,
+      zone_id: "zone-1a",
+      title: label,
+      severity: "medium",
+      status: "reported",
+      description: `Fan requires assistance at Gate A entrance. Service required: ${label}.`,
+      created_at: new Date().toISOString(),
     });
 
     setRequestSubmitted(true);
@@ -249,6 +261,7 @@ export const MatchdayHub: React.FC<{
       original_text: `🚨 [CRITICAL SOS]: Emergency ${emergencyType} reported at ${zoneObj?.name || "Sector"}!`,
       original_lang: "en",
       translated_text: `🚨 [SOS CRÍTICO]: ¡Emergencia ${emergencyType} reportada en ${zoneObj?.name || "Sector"}!`,
+      translated_lang: "es",
       sender: "Emergency SOS Broadcast",
     });
 
@@ -730,7 +743,7 @@ export const MatchdayHub: React.FC<{
                       </p>
                       {activeSosIncident.assigned_reason && (
                         <p className="text-[10px] text-white/50 font-mono italic">
-                          Reason: {activeSosIncident.assigned_reason}
+                          {activeSosIncident.fan_message || "Feel free to contact us if further help is needed!"}
                         </p>
                       )}
                     </div>

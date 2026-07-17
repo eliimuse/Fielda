@@ -79,13 +79,15 @@ export const CommandCenter: React.FC = () => {
     staffId: string,
     staffName: string,
     staffRole: string,
-    reason: string
+    reason: string,
+    fanMessage?: string
   ) => {
     await supabase.from('incidents').update({
       status: 'dispatched',
       assigned_role: staffRole,
       assigned_staff_name: staffName,
-      assigned_reason: reason
+      assigned_reason: reason,
+      fan_message: fanMessage || "Feel free to contact us if further help is needed!"
     }).eq('id', incidentId);
 
     await supabase.from('comms_messages').insert({
@@ -93,6 +95,7 @@ export const CommandCenter: React.FC = () => {
       original_text: `🚨 [DISPATCH SUCCESSFUL]: ${staffRole} ${staffName} dispatched to Sector. Reason: ${reason}`,
       original_lang: 'en',
       translated_text: `🚨 [DESPACHO EXITOSO]: ${staffRole} ${staffName} enviado al Sector. Razón: ${reason}`,
+      translated_lang: 'es',
       sender: 'Command Center AI Dispatch'
     });
 
@@ -426,7 +429,8 @@ export const CommandCenter: React.FC = () => {
                                       aiRec.assignedStaffId,
                                       aiRec.assignedStaffName,
                                       aiRec.assignedStaffRole,
-                                      aiRec.reason
+                                      aiRec.reason,
+                                      aiRec.fanMessage
                                     )}
                                     className="w-full bg-[#CCFF00] hover:bg-[#b8e600] text-slate-950 text-[10px] font-mono font-bold py-1.5 rounded-sm uppercase tracking-wide cursor-pointer transition-colors"
                                   >

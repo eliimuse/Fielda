@@ -49,6 +49,7 @@ export const CommsNode: React.FC = () => {
         original_text: inputText,
         original_lang: sourceLang,
         translated_text: translated,
+        translated_lang: targetLang,
         sender: 'Operations Center (Dispatch)',
       };
 
@@ -226,6 +227,7 @@ export const CommsNode: React.FC = () => {
               messages.map((msg) => {
                 const date = new Date(msg.created_at);
                 const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const actualTargetLang = msg.translated_lang || (msg.original_lang === 'en' ? 'es' : 'en');
                 
                 return (
                   <div 
@@ -262,9 +264,9 @@ export const CommsNode: React.FC = () => {
                       {/* Translated text block */}
                       <div className="bg-[#CCFF00]/10 p-2.5 rounded-sm border border-[#CCFF00]/20">
                         <div className="flex items-center justify-between border-b border-[#CCFF00]/10 pb-1 mb-1.5">
-                          <span className="text-[9px] font-mono font-bold text-[#CCFF00] uppercase">AI Translate ({targetLang})</span>
+                          <span className="text-[9px] font-mono font-bold text-[#CCFF00] uppercase">AI Translate ({actualTargetLang})</span>
                           <button 
-                            onClick={() => speakMessage(msg.translated_text, targetLang)}
+                            onClick={() => speakMessage(msg.translated_text, actualTargetLang)}
                             className="text-[#CCFF00] hover:text-white transition-colors cursor-pointer"
                             title="Speak Translation"
                           >
