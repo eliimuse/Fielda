@@ -384,6 +384,32 @@ app.post('/api/gemini/transcribe', async (req, res) => {
 });
 
 
+// Helper for highly robust translation with local fallback
+async function getTranslationWithFallback(text: string, targetLang: string): Promise<string> {
+  const lang = targetLang.substring(0, 2).toLowerCase();
+  
+  // 1. Try real translation using Google Translate free endpoint
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (response.ok) {
+      const json = await response.json();
+      if (json && json[0]) {
+        const translated = json[0].map((item: any) => item[0]).join('').trim();
+        if (translated) {
+          console.log(`Free Google Translate success: "${text}" -> "${translated}"`);
+          return translated;
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn('Free Google Translate API failed, falling back to local simulator:', err.message);
+  }
+
+  // 2. Local high-fidelity offline backup dictionary fallback
+  return simulateTranslation(text, targetLang);
+}
+
 // 1. AI Real-time Translation
 app.post('/api/gemini/translate', async (req, res) => {
   const { text, targetLang } = req.body;
@@ -394,7 +420,7 @@ app.post('/api/gemini/translate', async (req, res) => {
   const ai = getGeminiClient();
   if (!ai) {
     // Return high-fidelity mock translation
-    const translation = simulateTranslation(text, targetLang);
+    const translation = await getTranslationWithFallback(text, targetLang);
     return res.json({ translatedText: translation, source: 'simulator' });
   }
 
@@ -413,8 +439,8 @@ app.post('/api/gemini/translate', async (req, res) => {
     res.json({ translatedText: response.text?.trim() || text, source: 'gemini' });
   } catch (error: any) {
     const isQuota = error.status === 429 || (error.message && error.message.includes('quota'));
-    // Silently fallback on quota issues to avoid stderr triggers
-    res.json({ translatedText: simulateTranslation(text, targetLang), source: 'simulator-fallback', error: error.message });
+    const fallbackTranslation = await getTranslationWithFallback(text, targetLang);
+    res.json({ translatedText: fallbackTranslation, source: 'simulator-fallback', error: error.message });
   }
 });
 
