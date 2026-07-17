@@ -16,10 +16,24 @@ import { SensoryMap } from './components/SensoryMap';
 import { MobilityNavigator } from './components/MobilityNavigator';
 
 export default function App() {
-  const [currentModule, setModule] = useState<ThemeModule>('operationsIntelligence');
-  const [activeScreen, setActiveScreen] = useState<string>('command');
+  const [currentModule, setModule] = useState<ThemeModule>(() => {
+    const saved = localStorage.getItem('fielda_current_module');
+    return (saved as ThemeModule) || 'unitypath';
+  });
+  const [activeScreen, setActiveScreen] = useState<string>(() => {
+    const saved = localStorage.getItem('fielda_active_screen');
+    return saved || 'matchday';
+  });
   
   const [metrics, setMetrics] = useState({ visitors: 42389, waitTime: 11, aqi: 34, temp: 75 });
+  
+  useEffect(() => {
+    localStorage.setItem('fielda_current_module', currentModule);
+  }, [currentModule]);
+
+  useEffect(() => {
+    localStorage.setItem('fielda_active_screen', activeScreen);
+  }, [activeScreen]);
   
   useEffect(() => {
     const interval = setInterval(() => {

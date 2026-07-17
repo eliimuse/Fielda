@@ -130,6 +130,8 @@ export const NavShell: React.FC<NavShellProps> = ({
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('fielda_current_module');
+    localStorage.removeItem('fielda_active_screen');
     setShowProfileDropdown(false);
     // Refresh to update state
     window.location.reload();
@@ -161,9 +163,13 @@ export const NavShell: React.FC<NavShellProps> = ({
     if (role === 'fan') {
       setModule('unitypath');
       setActiveScreen('matchday');
+      localStorage.setItem('fielda_current_module', 'unitypath');
+      localStorage.setItem('fielda_active_screen', 'matchday');
     } else {
       setModule('operationsIntelligence');
       setActiveScreen('command');
+      localStorage.setItem('fielda_current_module', 'operationsIntelligence');
+      localStorage.setItem('fielda_active_screen', 'command');
     }
 
     setShowProfileDropdown(false);
@@ -447,7 +453,7 @@ export const NavShell: React.FC<NavShellProps> = ({
                     </div>
 
                     <div className="mb-3">
-                      <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Quick Swapper (Developer Testing)</p>
+                      <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>Quick Swapper</p>
                       <div className="grid grid-cols-2 gap-1">
                         <button 
                           onClick={() => handleQuickRoleSwitch('organizer')} 
