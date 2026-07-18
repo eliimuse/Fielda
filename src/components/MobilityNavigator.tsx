@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Card, Button, Badge } from './SharedPrimitives';
+import { getZoneDisplayName } from '../lib/emergencyZones';
 import { 
   Navigation, Compass, ShieldCheck, AlertTriangle, 
   Accessibility, ArrowRight, Users, Car, Clock, Sun, Wind, MapPin 
@@ -87,10 +88,7 @@ export const MobilityNavigator: React.FC<MobilityNavigatorProps> = ({ metrics })
       });
 
       const formattedStartNodes = uniqueStart.map(node => {
-        if (node.name.includes('Section 120') || node.name.includes('Sensory Room 202') || node.name.includes('Concourse West')) {
-           return { ...node, name: node.name.startsWith('🚨') ? node.name : `🚨 ${node.name}` };
-        }
-        return node;
+        return { ...node, name: getZoneDisplayName(node) };
       });
 
       const filteredDestNodes = uniqueDest.filter(node => 

@@ -21,6 +21,8 @@ import {
   Contrast,
 } from "lucide-react";
 import { AnimatedBackground } from "./AnimatedBackground";
+import { TacticalFanAssistance } from "./TacticalFanAssistance";
+import { AccessibilityInfrastructureGuides } from "./AccessibilityInfrastructureGuides";
 
 export const MatchdayHub: React.FC<{
   setActiveScreen: (scr: string) => void;
@@ -480,59 +482,7 @@ export const MatchdayHub: React.FC<{
     );
   }
 
-  const renderTacticalFanAssistance = (className: string = "") => (
-    <Card module="unitypath" className={`space-y-4 ${className}`}>
-      <div className="border-b border-white/5 pb-2">
-        <h3 className="text-xs font-mono font-bold uppercase text-white/40">
-          Tactical Fan Assistance
-        </h3>
-        <h4 className="text-sm font-display font-black uppercase tracking-wider text-white mt-1">
-          Request Live Volunteer Dispatch
-        </h4>
-      </div>
-      <p className="text-[11px] text-white/60 leading-relaxed">
-        Arriving at Azteca/MetLife and need an in-person companion helper,
-        sensory bag, or wheelchair routing helper? Tap an assistance card to
-        deploy help.
-      </p>
-      <div className="space-y-3 pt-2">
-        <button
-          onClick={() => triggerAccessibilityDispatch("wheelchair")}
-          className="w-full text-left p-3.5 rounded-sm border border-white/5 hover:border-[#9D50FF]/40 bg-[#111114] hover:bg-[#16161A] active:scale-95 transition-all flex items-center justify-between min-h-[44px] cursor-pointer"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">♿</span>
-            <div className="text-left">
-              <span className="block text-xs font-display font-bold uppercase text-white">
-                Wheelchair Assistance
-              </span>
-              <span className="text-[10px] font-mono text-white/40 uppercase">
-                Deploy step-free helper
-              </span>
-            </div>
-          </div>
-          <span className="text-[#9D50FF] text-xs font-bold">➔</span>
-        </button>
-        <button
-          onClick={() => triggerAccessibilityDispatch("guiding_companion")}
-          className="w-full text-left p-3.5 rounded-sm border border-white/5 hover:border-[#9D50FF]/40 bg-[#111114] hover:bg-[#16161A] active:scale-95 transition-all flex items-center justify-between min-h-[44px] cursor-pointer"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🤝</span>
-            <div className="text-left">
-              <span className="block text-xs font-display font-bold uppercase text-white">
-                Guiding Companion
-              </span>
-              <span className="text-[10px] font-mono text-white/40 uppercase">
-                Sight / sensory navigation helper
-              </span>
-            </div>
-          </div>
-          <span className="text-[#9D50FF] text-xs font-bold">➔</span>
-        </button>
-      </div>
-    </Card>
-  );
+
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto text-white relative">
@@ -852,63 +802,12 @@ export const MatchdayHub: React.FC<{
             </div>
 
             {/* Accessible Infrastructure Quick guides */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-mono font-bold uppercase text-white/40 tracking-wider">
-                Stadium Accessibility Infrastructure
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-sm border border-white/5 bg-[#16161A] flex flex-col gap-3 items-start">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-[#9D50FF]">
-                    <Navigation size={16} />
-                  </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <h4 className="text-xs font-display font-black uppercase tracking-wider text-white">
-                      Step-Free Access
-                    </h4>
-                    <p className="text-[11px] text-white/60 leading-relaxed">
-                      Elevators situating at Gate A and D feature Braille
-                      buttons, automatic leveling, and step-free floor layouts.
-                    </p>
-                  </div>
-                </div>
+            <AccessibilityInfrastructureGuides />
 
-                <div className="p-4 rounded-sm border border-white/5 bg-[#16161A] flex flex-col gap-3 items-start">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-[#9D50FF]">
-                    <Eye size={16} />
-                  </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <h4 className="text-xs font-display font-black uppercase tracking-wider text-white">
-                      Sensory Rooms
-                    </h4>
-                    <p className="text-[11px] text-white/60 leading-relaxed">
-                      Quiet Rooms equipped with noise reduction, tactile panels,
-                      and dimmable LEDs. Accessible freely to all neurodivergent
-                      fans.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-sm border border-white/5 bg-[#16161A] flex flex-col gap-3 items-start">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-sm bg-white/5 border border-white/10 flex items-center justify-center text-[#9D50FF]">
-                    <Heart size={16} />
-                  </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <h4 className="text-xs font-display font-black uppercase tracking-wider text-white">
-                      Support kits
-                    </h4>
-                    <p className="text-[11px] text-white/60 leading-relaxed">
-                      Sensory kits containing noise-canceling earmuffs, fidget
-                      toys, and feeling meters are obtainable free at any
-                      information rail.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {renderTacticalFanAssistance(
-              "hidden md:block lg:hidden mt-4 md:w-[609px] lg:w-full",
-            )}
+            <TacticalFanAssistance
+              className="hidden md:block lg:hidden mt-4 md:w-[609px] lg:w-full"
+              triggerAccessibilityDispatch={triggerAccessibilityDispatch}
+            />
 
             {/* Sensory Advisory Banner */}
             <div className="bg-amber-500/10 border border-amber-500/30 p-5 rounded-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-auto md:w-[608px] lg:w-full">
@@ -966,7 +865,10 @@ export const MatchdayHub: React.FC<{
               {/* Removed redundant inline alert */}
             </Card>
 
-            {renderTacticalFanAssistance("block md:hidden lg:block")}
+            <TacticalFanAssistance
+              className="block md:hidden lg:block"
+              triggerAccessibilityDispatch={triggerAccessibilityDispatch}
+            />
           </div>
         </div>
 

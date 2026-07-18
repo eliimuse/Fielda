@@ -444,15 +444,28 @@ export const AIAccessibility: React.FC = () => {
       - Quiet room real-time occupancy: ${stadiumContext.sensoryRooms?.join(', ') || 'Unknown'}.
       `;
 
-      const response = await fetch('/api/gemini/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: `${userText}\n\n${contextAddition}`,
-          history: messages,
-          language: languageNames[language] || 'English'
-        })
-      });
+      let response;
+      let attempts = 3;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          response = await fetch('/api/gemini/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: `${userText}\n\n${contextAddition}`,
+              history: messages,
+              language: languageNames[language] || 'English'
+            })
+          });
+          if (response.ok) break;
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      if (!response || !response.ok) {
+        throw new Error(`Server returned status ${response?.status || 'unknown'}`);
+      }
 
       const result = await response.json();
       
@@ -549,11 +562,24 @@ export const AIAccessibility: React.FC = () => {
             if (base64data) {
               setIsLoading(true);
               try {
-                const response = await fetch('/api/gemini/transcribe', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ audioBase64: base64data, mimeType: 'audio/webm' })
-                });
+                let response;
+                let attempts = 3;
+                for (let i = 0; i < attempts; i++) {
+                  try {
+                    response = await fetch('/api/gemini/transcribe', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ audioBase64: base64data, mimeType: 'audio/webm' })
+                    });
+                    if (response.ok) break;
+                  } catch (err) {
+                    if (i === attempts - 1) throw err;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                  }
+                }
+                if (!response || !response.ok) {
+                  throw new Error(`Server returned status ${response?.status || 'unknown'}`);
+                }
                 const data = await response.json();
                 if (data.text) {
                   sendMessage(data.text);

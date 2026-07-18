@@ -279,11 +279,8 @@ describe('Emergency Zone Alert Logic (Path 2 — hardcoded ALERT_ZONE_IDS)', () 
     expect(isZoneInAlert('zone-1d')).toBe(true);
   });
 
-  it('does NOT flag Concourse West (zone-1b) as an alert zone', () => {
-    // Regression guard: this is the exact bug we fixed — Concourse West
-    // previously showed a stale 🚨 prefix via localStorage's active_sos_id,
-    // even when no real critical incident pointed to it.
-    expect(isZoneInAlert('zone-1b')).toBe(false);
+  it('flags Concourse West (zone-1b) as an alert zone', () => {
+    expect(isZoneInAlert('zone-1b')).toBe(true);
   });
 
   it('does not flag an unrelated/unknown zone id', () => {
@@ -296,12 +293,17 @@ describe('Emergency Zone Alert Logic (Path 2 — hardcoded ALERT_ZONE_IDS)', () 
   });
 
   it('leaves the display name unprefixed for non-alert zones', () => {
-    const zone = { id: 'zone-1b', name: 'Concourse West (Level 1)' };
-    expect(getZoneDisplayName(zone)).toBe('Concourse West (Level 1)');
+    const zone = { id: 'zone-1a', name: 'Gate A (North)' };
+    expect(getZoneDisplayName(zone)).toBe('Gate A (North)');
+  });
+
+  it('handles name with existing siren and returns exactly one siren for alert zones', () => {
+    const zone = { id: 'zone-1c', name: '🚨 Section 120 (Seating)' };
+    expect(getZoneDisplayName(zone)).toBe('🚨 Section 120 (Seating)');
   });
 
   it('is independent of any incident/localStorage state (pure function, no side effects)', () => {
-    expect(ALERT_ZONE_IDS).toEqual(['zone-1c', 'zone-1d']);
+    expect(ALERT_ZONE_IDS).toEqual(['zone-1b', 'zone-1c', 'zone-1d']);
   });
 });
 

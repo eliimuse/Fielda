@@ -53,14 +53,27 @@ export const DeploymentCopilot: React.FC = () => {
 
     try {
       const currentOcc = Math.round((zone.current_occupancy / zone.capacity) * 100);
-      const response = await fetch('/api/gemini/crowd-prediction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          zoneName: zone.name,
-          occupancyPct: currentOcc
-        })
-      });
+      let response;
+      let attempts = 3;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          response = await fetch('/api/gemini/crowd-prediction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              zoneName: zone.name,
+              occupancyPct: currentOcc
+            })
+          });
+          if (response.ok) break;
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      if (!response || !response.ok) {
+        throw new Error(`Server returned status ${response?.status || 'unknown'}`);
+      }
 
       const result = await response.json();
       

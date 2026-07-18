@@ -33,15 +33,28 @@ export const CommandCenter: React.FC = () => {
 
     setIsLoadingAi(prev => ({ ...prev, [inc.id]: true }));
     try {
-      const res = await fetch('/api/gemini/assign-staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          incident: inc,
-          staffList: staff,
-          zones: zones
-        })
-      });
+      let res;
+      let attempts = 3;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          res = await fetch('/api/gemini/assign-staff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              incident: inc,
+              staffList: staff,
+              zones: zones
+            })
+          });
+          if (res.ok) break;
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      if (!res || !res.ok) {
+        throw new Error(`Server returned status ${res?.status || 'unknown'}`);
+      }
       const data = await res.json();
       if (data && data.assignment) {
         setAiAssignments(prev => ({ ...prev, [inc.id]: data.assignment }));

@@ -31,14 +31,27 @@ export const CommsNode: React.FC = () => {
 
     try {
       // 1. Call real server endpoint for translation
-      const response = await fetch('/api/gemini/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: inputText,
-          targetLang: targetLang
-        })
-      });
+      let response;
+      let attempts = 3;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          response = await fetch('/api/gemini/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: inputText,
+              targetLang: targetLang
+            })
+          });
+          if (response.ok) break;
+        } catch (err) {
+          if (i === attempts - 1) throw err;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      if (!response || !response.ok) {
+        throw new Error(`Server returned status ${response?.status || 'unknown'}`);
+      }
 
       const result = await response.json();
       const translated = result.translatedText || inputText;
