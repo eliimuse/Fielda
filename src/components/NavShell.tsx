@@ -138,8 +138,8 @@ export const NavShell: React.FC<NavShellProps> = ({
   };
 
   const handleQuickRoleSwitch = async (role: UserRole) => {
-    const email = role === 'organizer' ? 'org@fielda.org' : role === 'staff' ? 'staff@fielda.org' : 'fan@fielda.org';
-    const name = role === 'organizer' ? 'Dev Organizer' : role === 'staff' ? 'Dev Staff Member' : 'Dev Fan Guest';
+    const email = role === 'organizer' ? 'org@fielda.org' : 'fan@fielda.org';
+    const name = role === 'organizer' ? 'Dev Organizer' : 'Dev Fan Guest';
     
     // Simulate auth sign up or sign in
     const res = await supabase.auth.signInWithPassword({ email });
@@ -419,7 +419,7 @@ export const NavShell: React.FC<NavShellProps> = ({
                   <span className="text-xs font-semibold">{profile.full_name}</span>
                   <div className="flex gap-1.5 items-center">
                     <span className={`text-[9px] font-mono opacity-60 capitalize ${isDark ? 'text-white/50' : 'text-slate-500'}`}>Role:</span>
-                    <Badge variant={profile.role === 'organizer' ? 'success' : profile.role === 'staff' ? 'info' : 'warning'} module={currentModule}>
+                    <Badge variant={profile.role === 'organizer' ? 'success' : 'warning'} module={currentModule}>
                       {profile.role}
                     </Badge>
                   </div>

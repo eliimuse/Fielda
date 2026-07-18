@@ -136,7 +136,6 @@ const initialConversations: AssistantConversation[] = [
 
 const initialProfiles: Profile[] = [
   { id: 'user-organizer', full_name: 'Dev Organizer', role: 'organizer', language_pref: 'en', created_at: new Date().toISOString() },
-  { id: 'user-staff', full_name: 'Dev Staff Member', role: 'staff', language_pref: 'es', created_at: new Date().toISOString() },
   { id: 'user-fan', full_name: 'Dev Fan Guest', role: 'fan', language_pref: 'en', created_at: new Date().toISOString() }
 ];
 
@@ -211,8 +210,6 @@ class SupabaseSimulation {
         // Fall back to matching by role
         if (email.includes('org')) {
           profile = profilesStore.find(p => p.role === 'organizer');
-        } else if (email.includes('staff')) {
-          profile = profilesStore.find(p => p.role === 'staff');
         } else {
           profile = profilesStore.find(p => p.role === 'fan');
         }
@@ -334,6 +331,20 @@ class SupabaseSimulation {
       },
 
       insert: (record: any) => {
+        if (table === 'accessibility_requests' && !record.fan_id) {
+          const err = { message: 'fan_id is required' };
+          return {
+            select: () => ({
+              single: () => ({ data: null, error: err })
+            }),
+            data: null,
+            error: err,
+            then: (onfulfilled: (res: { data: any[] | null; error: any }) => any) => {
+              return onfulfilled({ data: null, error: err });
+            }
+          };
+        }
+
         const id = record.id || `${table.substring(0,3)}-` + Math.random().toString(36).substr(2, 9);
         const recordWithId = { id, ...record, created_at: record.created_at || new Date().toISOString() };
         
