@@ -478,6 +478,21 @@ export const MatchdayHub: React.FC<{
             </div>
           </div>
         </div>
+
+        {/* Floating Toast Notification */}
+        {requestSubmitted && (
+          <div className="fixed bottom-6 right-6 z-50 bg-black/95 border-2 border-[#CCFF00] text-[#CCFF00] px-6 py-4 rounded-sm shadow-2xl flex items-center gap-3 animate-bounce">
+            <ShieldCheck size={20} className="text-[#CCFF00] animate-pulse" />
+            <div className="text-left">
+              <span className="block text-[10px] font-mono font-bold uppercase tracking-wider text-white/55">
+                Status Update
+              </span>
+              <span className="block text-sm font-display font-black uppercase tracking-tight">
+                Request received
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
